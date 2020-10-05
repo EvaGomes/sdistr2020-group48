@@ -14,13 +14,18 @@ CC = gcc
 CFLAGS = -I./include
 
 
-$(EXECS_DIR)/test_data: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
+.PHONY: link
+link: $(EXECS_DIR)/test_entry.exe $(EXECS_DIR)/test_data.exe
+$(EXECS_DIR)/test_entry.exe: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 	$(CC) $(CFLAGS) $^ -o $@
-	chmod 777 $(EXECS_DIR)/test_data
+	chmod 777 $@
+$(EXECS_DIR)/test_data.exe: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
+	$(CC) $(CFLAGS) $^ -o $@
+	chmod 777 $@
 
+# compile
 $(OBJS_DIR)/%.o: $(SOURCES_DIR)/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
-
 
 .PHONY: clean
 clean:
