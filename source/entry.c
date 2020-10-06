@@ -6,28 +6,75 @@
 
 #include "entry.h"
 #include "data.h"
+#include <stdlib.h>
+#include <string.h>
+
+const int SIZE_OF_ENTRY_T = sizeof(struct entry_t);
 
 struct entry_t* entry_create(char* key, struct data_t* data) {
-  return 0; // TODO
+  struct entry_t* entryStruct = (struct entry_t*) malloc(SIZE_OF_ENTRY_T);
+  entryStruct->key = key;
+  entryStruct->value = data;
+  return entryStruct;
 }
 
 void entry_initialize(struct entry_t* entry) {
-  // TODO
+  if (entry != NULL) {
+    entry->key = NULL;
+    entry->value = NULL;
+  }
 }
 
 void entry_destroy(struct entry_t* entry) {
-  // TODO
+  if (entry != NULL) {
+    free(entry->key);
+    data_destroy(entry->value);
+    free(entry);
+  }
 }
 
 struct entry_t* entry_dup(struct entry_t* entry) {
-  return 0; // TODO
+  if (entry == NULL) {
+    return NULL;
+  }
+  char* copied_key = entry->key == NULL ? NULL : strdup(entry->key);
+  struct data_t* copied_value = data_dup(entry->value);
+  return entry_create(copied_key, copied_value);
 }
 
-void entry_replace(struct entry_t* entry, char* new_key,
-                   struct data_t* new_value) {
-  // TODO
+void entry_replace(struct entry_t* entry, char* new_key, struct data_t* new_value) {
+  if (entry != NULL) {
+    free(entry->key);
+    data_destroy(entry->value);
+    entry->key = new_key;
+    entry->value = new_value;
+  }
+}
+
+/* Compares two strings. */
+int _key_compare(char* key1, char* key2) {
+  if (key1 == key2) {
+    return 0;
+  }
+  if (key1 == NULL) {
+	  return -1;
+  }
+  if (key2 == NULL) {
+	  return +1;
+  }
+  int comparison = strcmp(key1, key2);
+  return comparison < 0 ? -1 : (comparison == 0 ? 0 : +1);
 }
 
 int entry_compare(struct entry_t* entry1, struct entry_t* entry2) {
-  return 0; // TODO
+  if (entry1 == entry2) {
+    return 0;
+  }
+  if (entry1 == NULL) {
+	  return -1;
+  }
+  if (entry2 == NULL) {
+	  return +1;
+  }
+  return _key_compare(entry1->key, entry2->key);
 }
