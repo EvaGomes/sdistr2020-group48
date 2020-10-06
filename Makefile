@@ -10,13 +10,15 @@ HEADERS_DIR := include
 OBJS_DIR := object
 SOURCES_DIR := source
 
+DEBUG := # assign any value to enable CDEBUGFLAGS
+
 CC := gcc
+CDEBUGFLAGS := $(if $(DEBUG), -g -Wall,)
 CFLAGS := -I./include
-CDEBUGFLAGS := -g -Wall
 
 
 .PHONY: all
-all: clean link test
+all: clean link
 
 .PHONY: link
 link: $(EXECS_DIR)/test_entry.exe $(EXECS_DIR)/test_data.exe
@@ -28,7 +30,7 @@ $(EXECS_DIR)/test_%.exe:
 
 # compile
 $(OBJS_DIR)/%.o: $(SOURCES_DIR)/%.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS)$(CDEBUGFLAGS) -c $^ -o $@
 
 .PHONY: clean
 clean:
@@ -36,5 +38,14 @@ clean:
 
 .PHONY: test
 test:
+	@echo "--- Target: test ---"
 	./$(EXECS_DIR)/test_data.exe
+	@echo "--------------------"
 	./$(EXECS_DIR)/test_entry.exe
+
+.PHONY: testMemLeaks
+testMemLeaks:
+	@echo "--- Target: testMemLeaks ---"
+	valgrind --leak-check=yes ./$(EXECS_DIR)/test_data.exe
+	@echo "--------------------"
+	valgrind --leak-check=yes ./$(EXECS_DIR)/test_entry.exe
