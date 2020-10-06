@@ -11,6 +11,9 @@
 const int SIZE_OF_DATA_T = sizeof(struct data_t);
 
 struct data_t* data_create(int size) {
+  if (size <= 0) {
+    return NULL;
+  }
   return data_create2(size, malloc(size));
 }
 
