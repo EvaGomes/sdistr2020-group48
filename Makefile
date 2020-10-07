@@ -10,6 +10,9 @@ HEADERS_DIR := include
 OBJS_DIR := object
 SOURCES_DIR := source
 
+MODULES := serialization tree entry data
+TEST_EXECS := $(patsubst %,$(EXECS_DIR)/test_%.exe, $(MODULES))
+
 DEBUG := # assign any value to enable CDEBUGFLAGS
 
 CC := gcc
@@ -21,17 +24,14 @@ CFLAGS := -I./include
 all: clean link
 
 .PHONY: link
-link: $(EXECS_DIR)/test_serialization.exe \
-	  $(EXECS_DIR)/test_tree.exe \
-	  $(EXECS_DIR)/test_entry.exe \
-	  $(EXECS_DIR)/test_data.exe
+link: $(TEST_EXECS)
 $(EXECS_DIR)/test_serialization.exe: $(OBJS_DIR)/test_serialization.o $(OBJS_DIR)/serialization.o \
                                      $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_tree.exe: $(OBJS_DIR)/test_tree.o $(OBJS_DIR)/tree.o \
                             $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_entry.exe: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_data.exe: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
-$(EXECS_DIR)/test_%.exe:
+$(TEST_EXECS): %:
 	$(CC) $(CFLAGS) $^ -o $@
 	chmod 777 $@
 
@@ -45,22 +45,22 @@ clean:
 
 .PHONY: test
 test:
-	@echo "--- Target: test ---"
-	./$(EXECS_DIR)/test_data.exe
-	@echo "--------------------"
-	./$(EXECS_DIR)/test_entry.exe
-	@echo "--------------------"
-	./$(EXECS_DIR)/test_tree.exe
-	@echo "--------------------"
-	./$(EXECS_DIR)/test_serialization.exe
+	@for i in $(TEST_EXECS); \
+	do \
+		echo "----------------------------------" ; \
+		echo "$$i" ; \
+		echo "----------------------------------" ; \
+		./$$i ; \
+		echo "----------------------------------\n" ; \
+	done
 
 .PHONY: testMemLeaks
 testMemLeaks:
-	@echo "--- Target: testMemLeaks ---"
-	valgrind --leak-check=yes ./$(EXECS_DIR)/test_data.exe
-	@echo "--------------------"
-	valgrind --leak-check=yes ./$(EXECS_DIR)/test_entry.exe
-	@echo "--------------------"
-	valgrind --leak-check=yes ./$(EXECS_DIR)/test_tree.exe
-	@echo "--------------------"
-	valgrind --leak-check=yes ./$(EXECS_DIR)/test_serialization.exe
+	@for i in $(TEST_EXECS); \
+	do \
+		echo "----------------------------------" ; \
+		echo "$$i" ; \
+		echo "----------------------------------" ; \
+		valgrind --leak-check=yes ./$$i ; \
+		echo "----------------------------------\n" ; \
+	done
