@@ -22,10 +22,13 @@ all: clean link
 
 .PHONY: link
 link: $(EXECS_DIR)/test_serialization.exe \
+	  $(EXECS_DIR)/test_tree.exe \
 	  $(EXECS_DIR)/test_entry.exe \
 	  $(EXECS_DIR)/test_data.exe
 $(EXECS_DIR)/test_serialization.exe: $(OBJS_DIR)/test_serialization.o $(OBJS_DIR)/serialization.o \
-                                     $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
+                                     $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
+$(EXECS_DIR)/test_tree.exe: $(OBJS_DIR)/test_tree.o $(OBJS_DIR)/tree.o \
+                            $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_entry.exe: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_data.exe: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_%.exe:
@@ -47,6 +50,8 @@ test:
 	@echo "--------------------"
 	./$(EXECS_DIR)/test_entry.exe
 	@echo "--------------------"
+	./$(EXECS_DIR)/test_tree.exe
+	@echo "--------------------"
 	./$(EXECS_DIR)/test_serialization.exe
 
 .PHONY: testMemLeaks
@@ -55,5 +60,7 @@ testMemLeaks:
 	valgrind --leak-check=yes ./$(EXECS_DIR)/test_data.exe
 	@echo "--------------------"
 	valgrind --leak-check=yes ./$(EXECS_DIR)/test_entry.exe
+	@echo "--------------------"
+	valgrind --leak-check=yes ./$(EXECS_DIR)/test_tree.exe
 	@echo "--------------------"
 	valgrind --leak-check=yes ./$(EXECS_DIR)/test_serialization.exe
