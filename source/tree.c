@@ -14,6 +14,8 @@
 
 const int SIZE_OF_TREE_T = sizeof(struct tree_t);
 const int SIZE_OF_TREE_NODE_T = sizeof(struct tree_node_t);
+const int SIZE_OF_CHAR_POINTER = sizeof(char*);
+const int SIZE_OF_NULL = sizeof(NULL);
 
 struct tree_t* tree_create() {
   struct tree_t* tree = malloc(SIZE_OF_TREE_T);
@@ -136,10 +138,32 @@ int tree_height(struct tree_t* tree) {
   return tree == NULL ? -1 : tree->height;
 }
 
+/* Core recursive algorithm for tree_get_keys (uses an in-order traversal algorithm). */
+int _collect_keys(struct tree_node_t* node, char** keys, int next_index) {
+  if (node != NULL) {
+    next_index = _collect_keys(node->left, keys, next_index);
+    keys[next_index] = strdup(node->entry->key);
+    next_index += 1;
+    next_index = _collect_keys(node->right, keys, next_index);
+  }
+  return next_index;
+}
+
 char** tree_get_keys(struct tree_t* tree) {
-  return 0; // TODO
+  if (tree == NULL) {
+    return NULL;
+  }
+  char** keys = malloc(SIZE_OF_CHAR_POINTER * tree->size + SIZE_OF_NULL);
+  int last_index = _collect_keys(tree->root, keys, 0);
+  keys[last_index] = NULL;
+  return keys;
 }
 
 void tree_free_keys(char** keys) {
-  // TODO
+  if (keys != NULL) {
+    for (int i = 0; keys[i] != NULL; ++i) {
+      free(keys[i]);
+    }
+    free(keys);
+  }
 }
