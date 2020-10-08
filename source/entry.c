@@ -6,6 +6,7 @@
 
 #include "entry.h"
 #include "data.h"
+#include "entry-private.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,16 +52,16 @@ void entry_replace(struct entry_t* entry, char* new_key, struct data_t* new_valu
   }
 }
 
-/* Compares two strings. */
-int _key_compare(char* key1, char* key2) {
+// defined at entry-private.h
+int key_compare(char* key1, char* key2) {
   if (key1 == key2) {
     return 0;
   }
   if (key1 == NULL) {
-	  return -1;
+    return -1;
   }
   if (key2 == NULL) {
-	  return +1;
+    return +1;
   }
   int comparison = strcmp(key1, key2);
   return comparison < 0 ? -1 : (comparison == 0 ? 0 : +1);
@@ -71,10 +72,10 @@ int entry_compare(struct entry_t* entry1, struct entry_t* entry2) {
     return 0;
   }
   if (entry1 == NULL) {
-	  return -1;
+    return -1;
   }
   if (entry2 == NULL) {
-	  return +1;
+    return +1;
   }
-  return _key_compare(entry1->key, entry2->key);
+  return key_compare(entry1->key, entry2->key);
 }
