@@ -6,6 +6,7 @@
 
 #include "tree.h"
 #include "data.h"
+#include "entry-private.h"
 #include "entry.h"
 #include "tree-private.h"
 #include <stdlib.h>
@@ -44,7 +45,21 @@ int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
 }
 
 struct data_t* tree_get(struct tree_t* tree, char* key) {
-  return 0; // TODO
+  if (tree == NULL || tree->root == NULL) {
+    return NULL;
+  }
+
+  struct tree_node_t* current_tree_node = tree->root;
+  while (current_tree_node != NULL) {
+    int comparison = key_compare(key, current_tree_node->entry->key);
+    if (comparison == 0) {
+      return data_dup(current_tree_node->entry->value);
+    } else {
+      current_tree_node = comparison < 0 ? current_tree_node->left : current_tree_node->right;
+    }
+  }
+
+  return NULL; // not found
 }
 
 int tree_del(struct tree_t* tree, char* key) {
