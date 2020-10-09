@@ -108,26 +108,95 @@ int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
   return 0;
 }
 
-struct data_t* tree_get(struct tree_t* tree, char* key) {
+/* Returns the pointer to the node with the given key, or NULL if it is not in the given tree. */
+struct tree_node_t** _tree_node_pointer_get(struct tree_t* tree, char* key) {
   if (tree == NULL || tree->root == NULL) {
     return NULL;
   }
 
-  struct tree_node_t* current_tree_node = tree->root;
-  while (current_tree_node != NULL) {
-    int comparison = key_compare(key, current_tree_node->entry->key);
+  struct tree_node_t** pointer_to_current_node = &(tree->root);
+  struct tree_node_t* current_node = *pointer_to_current_node;
+  while (current_node != NULL) {
+    int comparison = key_compare(key, current_node->entry->key);
     if (comparison == 0) {
-      return data_dup(current_tree_node->entry->value);
+      return pointer_to_current_node;
     } else {
-      current_tree_node = comparison < 0 ? current_tree_node->left : current_tree_node->right;
+      pointer_to_current_node = comparison < 0 ? &(current_node->left) : &(current_node->right);
+      current_node = *pointer_to_current_node;
     }
   }
+  return NULL; // node not found
+}
 
-  return NULL; // not found
+struct data_t* tree_get(struct tree_t* tree, char* key) {
+  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(tree, key);
+  if (pointer_to_node == NULL) {
+    return NULL;
+  }
+  struct data_t* value = (*pointer_to_node)->entry->value;
+  return data_dup(value);
+}
+
+/* Removes the node from the given pointer, replacing it with the appropriate descendant (if any)
+ * so that the tree continues to be a Binary Search Tree. Also destroys the node.
+ *  Expects the node in the pointer to be not NULL.
+ */
+void _tree_node_del(struct tree_node_t** pointer_to_node) {
+  struct tree_node_t* node = *pointer_to_node;
+  struct tree_node_t* replacement;
+
+  if (node->left == NULL && node->right == NULL) {
+    replacement = NULL; // no children: simply remove node
+  } else if (node->left == NULL) {
+    replacement = node->right; // only child: use it to replace node
+  } else if (node->right == NULL) {
+    replacement = node->left; // only child: use it to replace node
+  } else {
+    // two children: replace the node to delete with the successor (node from the right subtree)
+    // that has the lowest key
+
+    // find the successor that has the lowest key
+    struct tree_node_t** pointer_to_successor_with_lowest_key = &(node->right);
+    struct tree_node_t* successor_with_lowest_key = *pointer_to_successor_with_lowest_key;
+    while (successor_with_lowest_key->left != NULL) {
+      pointer_to_successor_with_lowest_key = &(successor_with_lowest_key->left);
+      successor_with_lowest_key = *pointer_to_successor_with_lowest_key;
+    }
+
+    // such successor has, at most, 1 child and it would be on the right side.
+    // if existent, replace sucessor with the child and remove child from successor
+    *pointer_to_successor_with_lowest_key = successor_with_lowest_key->right;
+
+    // do replace
+    replacement = successor_with_lowest_key;
+    replacement->left = node->left;
+    replacement->right = node->right;
+  }
+
+  *pointer_to_node = replacement;
+  entry_destroy(node->entry);
+  free(node);
+}
+
+/* Recursive algorithm to compute the height of the tree starting at the given node. */
+int _tree_compute_height(struct tree_node_t* node) {
+  if (node == NULL) {
+    return -1;
+  }
+  int height_of_left_tree = _tree_compute_height(node->left);
+  int height_of_right_tree =  _tree_compute_height(node->right);
+  return 1 + _int_max(height_of_left_tree, height_of_right_tree);
 }
 
 int tree_del(struct tree_t* tree, char* key) {
-  return 0; // TODO
+  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(tree, key);
+  if (pointer_to_node == NULL) {
+    return -1;
+  }
+  _tree_node_del(pointer_to_node);
+  tree->size -= 1;
+  tree->height = _tree_compute_height(tree->root);
+  return 0;
 }
 
 int tree_size(struct tree_t* tree) {
