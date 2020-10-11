@@ -11,7 +11,7 @@ OBJS_DIR := object
 SOURCES_DIR := source
 
 MODULES := serialization tree entry data
-TEST_EXECS := $(patsubst %,$(EXECS_DIR)/test_%.exe, $(MODULES))
+TEST_EXECS := $(patsubst %,$(EXECS_DIR)/test_%, $(MODULES))
 
 DEBUG := # assign any value to enable CDEBUGFLAGS
 
@@ -25,12 +25,12 @@ all: clean link
 
 .PHONY: link
 link: $(TEST_EXECS)
-$(EXECS_DIR)/test_serialization.exe: $(OBJS_DIR)/test_serialization.o $(OBJS_DIR)/serialization.o \
+$(EXECS_DIR)/test_serialization: $(OBJS_DIR)/test_serialization.o $(OBJS_DIR)/serialization.o \
                                      $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(EXECS_DIR)/test_tree.exe: $(OBJS_DIR)/test_tree.o $(OBJS_DIR)/tree.o \
+$(EXECS_DIR)/test_tree: $(OBJS_DIR)/test_tree.o $(OBJS_DIR)/tree.o \
                             $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(EXECS_DIR)/test_entry.exe: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(EXECS_DIR)/test_data.exe: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
+$(EXECS_DIR)/test_entry: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
+$(EXECS_DIR)/test_data: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
 $(TEST_EXECS): %:
 	$(CC) $(CFLAGS) $^ -o $@
 	chmod 777 $@
