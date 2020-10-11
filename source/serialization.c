@@ -6,11 +6,13 @@
 
 #include "data.h"
 #include "entry.h"
+#include "tree-private.h"
 #include "tree.h"
 #include <stdlib.h>
 #include <string.h>
 
 const int SIZE_OF_DATASIZE = sizeof(int);
+const int SIZE_OF_INT = sizeof(int);
 
 int data_to_buffer(struct data_t* dataStruct, char** data_buf) {
   if (dataStruct == NULL || data_buf == NULL) {
@@ -102,10 +104,66 @@ struct entry_t* buffer_to_entry(char* buffer, int buffer_size) {
   return entry_create(key, value);
 }
 
-int tree_to_buffer(struct tree_t* tree, char** tree_buf) {
-  return 0; // TODO
+/* Core recursive algorithm to collect the entry_to_buffer of each node of the tree
+ *  (uses an pre-order traversal algorithm).
+ */
+int _collect_entry_bufs(struct tree_node_t* node, char** entries_bufs, int* len_entries_bufs,
+                        int next_index) {
+  if (node != NULL) {
+    len_entries_bufs[next_index] = entry_to_buffer(node->entry, entries_bufs + next_index);
+    next_index += 1;
+    next_index = _collect_entry_bufs(node->left, entries_bufs, len_entries_bufs, next_index);
+    next_index = _collect_entry_bufs(node->right, entries_bufs, len_entries_bufs, next_index);
+  }
+  return next_index;
 }
 
-struct entry_t* buffer_to_tree(char* tree_buf, int tree_buf_size) {
-  return 0; // TODO
+int tree_to_buffer(struct tree_t* tree, char** tree_buf) {
+  if (tree == NULL || tree_buf == NULL) {
+    return -1;
+  }
+
+  char* entries_bufs[tree->size];
+  int len_entries_bufs[tree->size];
+  _collect_entry_bufs(tree->root, entries_bufs, len_entries_bufs, 0);
+
+  int len_buffer = 0;
+  for (int i = 0; i < tree->size; ++i) {
+    len_buffer += SIZE_OF_INT;
+    len_buffer += len_entries_bufs[i];
+  }
+
+  char* buffer = malloc(len_buffer);
+  int current_index = 0;
+  for (int i = 0; i < tree->size; ++i) {
+    memcpy(buffer + current_index, len_entries_bufs + i, SIZE_OF_INT);
+    memcpy(buffer + current_index + SIZE_OF_INT, entries_bufs[i], len_entries_bufs[i]);
+
+    free(entries_bufs[i]);
+    current_index += SIZE_OF_INT + len_entries_bufs[i];
+  }
+
+  *tree_buf = buffer;
+  return len_buffer;
+}
+
+struct tree_t* buffer_to_tree(char* buffer, int buffer_size) {
+  if (buffer == NULL || buffer_size <= 0) {
+    return NULL;
+  }
+
+  struct tree_t* tree = tree_create();
+  
+  int current_index = 0;
+  while(current_index < buffer_size) {
+    int len_entry;
+    memcpy(&len_entry, buffer + current_index, SIZE_OF_INT);
+    struct entry_t* entry = buffer_to_entry(buffer + current_index + SIZE_OF_INT, len_entry);
+
+    tree_put(tree, entry->key, entry->value);
+
+    entry_destroy(entry);
+    current_index += SIZE_OF_INT + len_entry;
+  }
+  return tree;
 }

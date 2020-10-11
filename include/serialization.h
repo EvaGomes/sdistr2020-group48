@@ -42,6 +42,6 @@ int tree_to_buffer(struct tree_t *tree, char **tree_buf);
  * tree_t, cujo espaco em memoria deve ser reservado.
  * Devolve NULL em caso de erro.
  */
-struct entry_t *buffer_to_tree(char *tree_buf, int tree_buf_size);
+struct tree_t *buffer_to_tree(char *tree_buf, int tree_buf_size);
 
 #endif
