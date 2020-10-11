@@ -1,4 +1,3 @@
-#include "../utils.c"
 #include "data.h"
 #include "entry.h"
 #include "serialization.h"
@@ -188,6 +187,67 @@ void test__tree_with_7_nodes() {
 }
 
 // **************************************************************
+// serialization.c
+// **************************************************************
+
+void test__tree_serialization() {
+  printTestIntro("tree.c", "tree_to_buffer and buffer_to_tree");
+
+  struct tree_t* tree = tree_create();
+
+  int labels[] = {4, 3, 2, 1, 8, 9, 5};
+  const int num_of_nodes = sizeof(labels) / sizeof(int);
+
+  for (int i = 0; i < num_of_nodes; ++i) {
+    char key[5];
+    sprintf(key, "key%d", labels[i]);
+    char data[7];
+    sprintf(data, "value%d", labels[i]);
+    struct data_t* value = data_create2(strlen(data) + 1, data);
+
+    tree_put(tree, key, value);
+
+    free(value);
+  }
+
+  char* serialized_tree;
+  int len_serialized_tree = tree_to_buffer(tree, &serialized_tree);
+  struct tree_t* deserialized_tree = buffer_to_tree(serialized_tree, len_serialized_tree);
+
+  assert(deserialized_tree != NULL);
+  assert(deserialized_tree->size == num_of_nodes);
+  assert(deserialized_tree->height == 3);
+  assert(deserialized_tree->root != NULL);
+
+  assert(strcmp(deserialized_tree->root->entry->key, "key4") == 0);
+  assert(strcmp(deserialized_tree->root->entry->value->data, "value4") == 0);
+  assert(strcmp(deserialized_tree->root->left->entry->key, "key3") == 0);
+  assert(strcmp(deserialized_tree->root->left->entry->value->data, "value3") == 0);
+  assert(strcmp(deserialized_tree->root->left->left->entry->key, "key2") == 0);
+  assert(strcmp(deserialized_tree->root->left->left->entry->value->data, "value2") == 0);
+  assert(strcmp(deserialized_tree->root->left->left->left->entry->key, "key1") == 0);
+  assert(strcmp(deserialized_tree->root->left->left->left->entry->value->data, "value1") == 0);
+  assert(deserialized_tree->root->left->left->right == NULL);
+  assert(deserialized_tree->root->left->right == NULL);
+  assert(strcmp(deserialized_tree->root->right->entry->key, "key8") == 0);
+  assert(strcmp(deserialized_tree->root->right->entry->value->data, "value8") == 0);
+  assert(strcmp(deserialized_tree->root->right->left->entry->key, "key5") == 0);
+  assert(strcmp(deserialized_tree->root->right->left->entry->value->data, "value5") == 0);
+  assert(deserialized_tree->root->right->left->left == NULL);
+  assert(deserialized_tree->root->right->left->right == NULL);
+  assert(strcmp(deserialized_tree->root->right->right->entry->key, "key9") == 0);
+  assert(strcmp(deserialized_tree->root->right->right->entry->value->data, "value9") == 0);
+  assert(deserialized_tree->root->right->right->left == NULL);
+  assert(deserialized_tree->root->right->right->right == NULL);
+
+  tree_destroy(deserialized_tree);
+  free(serialized_tree);
+  tree_destroy(tree);
+
+  printTestDone();
+}
+
+// **************************************************************
 
 int main() {
   printf("-------------------------\n");
@@ -202,6 +262,8 @@ int main() {
   test__entry_compare__NULL_keys();
 
   test__tree_with_7_nodes();
+
+  test__tree_serialization();
 
   printf("\n\nDONE: No assertions failed!\n");
   printf("-------------------------\n");
