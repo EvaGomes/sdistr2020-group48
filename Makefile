@@ -64,3 +64,32 @@ testMemLeaks:
 		valgrind --leak-check=yes ./$$i ; \
 		echo "----------------------------------\n" ; \
 	done
+
+# --- private tests ---
+
+PRIVATE_TESTS_DIR := tests-private
+PRIVATE_TESTS_MODULE := $(PRIVATE_TESTS_DIR)/test_all-private
+
+.PHONY: privateTests
+privateTests: cleanPrivateTests linkPrivateTests runPrivateTests
+
+.PHONY: cleanPrivateTests
+cleanPrivateTests:
+	rm -rf $(PRIVATE_TESTS_DIR)/*.o $(PRIVATE_TESTS_DIR)/*.exe
+
+.PHONY: linkPrivateTests
+linkPrivateTests: $(PRIVATE_TESTS_MODULE).exe
+$(PRIVATE_TESTS_MODULE).exe: $(PRIVATE_TESTS_MODULE).o \
+							 $(OBJS_DIR)/serialization.o \
+							 $(OBJS_DIR)/tree.o \
+							 $(OBJS_DIR)/entry.o \
+							 $(OBJS_DIR)/data.o
+	$(CC) $(CFLAGS) $^ -o $@
+	chmod 777 $@
+$(PRIVATE_TESTS_MODULE).o: $(PRIVATE_TESTS_MODULE).c
+	$(CC) $(CFLAGS) -g -Wall -c $^ -o $@
+
+.PHONY: runPrivateTests
+runPrivateTests:
+	./$(PRIVATE_TESTS_MODULE).exe
+	valgrind --leak-check=yes ./$(PRIVATE_TESTS_MODULE).exe
