@@ -5,6 +5,7 @@
  */
 
 #include "data.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,14 +15,23 @@ struct data_t* data_create(int size) {
   if (size <= 0) {
     return NULL;
   }
-  return data_create2(size, malloc(size));
+  void* data = malloc(size);
+  if (data == NULL) {
+    fprintf(stderr, "\nERR: data_create: malloc failed\n");
+    return NULL;
+  }
+  return data_create2(size, data);
 }
 
 struct data_t* data_create2(int size, void* data) {
   if (size <= 0 || data == NULL) {
     return NULL;
   }
-  struct data_t* dataStruct = (struct data_t*) malloc(SIZE_OF_DATA_T);
+  struct data_t* dataStruct = malloc(SIZE_OF_DATA_T);
+  if (data == NULL) {
+    fprintf(stderr, "\nERR: data_create2: malloc failed\n");
+    return NULL;
+  }
   dataStruct->datasize = size;
   dataStruct->data = data;
   return dataStruct;
@@ -40,6 +50,10 @@ struct data_t* data_dup(struct data_t* dataStruct) {
   }
   int size = dataStruct->datasize;
   void* copied_data = malloc(size);
+  if (copied_data == NULL) {
+    fprintf(stderr, "\nERR: data_dup: malloc failed\n");
+    return NULL;
+  }
   memcpy(copied_data, dataStruct->data, size);
   return data_create2(size, copied_data);
 }

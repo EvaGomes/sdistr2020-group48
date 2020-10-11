@@ -7,16 +7,21 @@
 #include "entry.h"
 #include "data.h"
 #include "entry-private.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 const int SIZE_OF_ENTRY_T = sizeof(struct entry_t);
 
 struct entry_t* entry_create(char* key, struct data_t* data) {
-  struct entry_t* entryStruct = (struct entry_t*) malloc(SIZE_OF_ENTRY_T);
-  entryStruct->key = key;
-  entryStruct->value = data;
-  return entryStruct;
+  struct entry_t* entry = malloc(SIZE_OF_ENTRY_T);
+  if (entry == NULL) {
+    fprintf(stderr, "\nERR: entry_create: malloc failed\n");
+    return NULL;
+  }
+  entry->key = key;
+  entry->value = data;
+  return entry;
 }
 
 void entry_initialize(struct entry_t* entry) {

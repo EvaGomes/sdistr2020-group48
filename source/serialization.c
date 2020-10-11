@@ -8,6 +8,7 @@
 #include "entry.h"
 #include "tree-private.h"
 #include "tree.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -48,6 +49,10 @@ struct data_t* buffer_to_data(char* buffer, int buffer_size) {
   memcpy(&datasize, buffer + index_datasize, len_datasize);
 
   void* data = malloc(datasize);
+  if (data == NULL) {
+    fprintf(stderr, "\nERR: buffer_to_data: malloc failed\n");
+    return NULL;
+  }
   int len_data = datasize;
   int index_data = index_datasize + len_datasize;
   memcpy(data, buffer + index_data, len_data);
@@ -60,11 +65,11 @@ int entry_to_buffer(struct entry_t* entry, char** entry_buf) {
     return -1;
   }
 
-  char** pointer_value = malloc(sizeof(char*));
+  char* value;
 
   int len_len_key = sizeof(int);
   int len_key = strlen(entry->key) + 1;
-  int len_value = data_to_buffer(entry->value, pointer_value);
+  int len_value = data_to_buffer(entry->value, &value);
 
   int index_len_key = 0;
   int index_key = len_len_key;
@@ -72,12 +77,15 @@ int entry_to_buffer(struct entry_t* entry, char** entry_buf) {
 
   int buffer_size = len_len_key + len_key + len_value;
   char* buffer = malloc(buffer_size);
+  if (buffer == NULL) {
+    fprintf(stderr, "\nERR: entry_to_buffer: malloc failed\n");
+    return -1;
+  }
   memcpy(buffer + index_len_key, &len_key, len_len_key);
   memcpy(buffer + index_key, entry->key, len_key);
-  memcpy(buffer + index_value, *pointer_value, len_value);
+  memcpy(buffer + index_value, value, len_value);
 
-  free(*pointer_value);
-  free(pointer_value);
+  free(value);
 
   *entry_buf = buffer;
   return buffer_size;
@@ -94,6 +102,10 @@ struct entry_t* buffer_to_entry(char* buffer, int buffer_size) {
   memcpy(&len_key, buffer + index_len_key, len_len_key);
 
   char* key = malloc(len_key);
+  if (key == NULL) {
+    fprintf(stderr, "\nERR: buffer_to_entry: malloc failed\n");
+    return NULL;
+  }
   int index_key = index_len_key + len_len_key;
   memcpy(key, buffer + index_key, len_key);
 
@@ -134,6 +146,10 @@ int tree_to_buffer(struct tree_t* tree, char** tree_buf) {
   }
 
   char* buffer = malloc(len_buffer);
+  if (buffer == NULL) {
+    fprintf(stderr, "\nERR: tree_to_buffer: malloc failed\n");
+    return -1;
+  }
   int current_index = 0;
   for (int i = 0; i < tree->size; ++i) {
     memcpy(buffer + current_index, len_entries_bufs + i, SIZE_OF_INT);
@@ -153,9 +169,9 @@ struct tree_t* buffer_to_tree(char* buffer, int buffer_size) {
   }
 
   struct tree_t* tree = tree_create();
-  
+
   int current_index = 0;
-  while(current_index < buffer_size) {
+  while (current_index < buffer_size) {
     int len_entry;
     memcpy(&len_entry, buffer + current_index, SIZE_OF_INT);
     struct entry_t* entry = buffer_to_entry(buffer + current_index + SIZE_OF_INT, len_entry);

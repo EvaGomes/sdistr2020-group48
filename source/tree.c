@@ -9,6 +9,7 @@
 #include "entry-private.h"
 #include "entry.h"
 #include "tree-private.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,6 +20,10 @@ const int SIZE_OF_NULL = sizeof(NULL);
 
 struct tree_t* tree_create() {
   struct tree_t* tree = malloc(SIZE_OF_TREE_T);
+  if (tree == NULL) {
+    fprintf(stderr, "\nERR: tree_create: malloc failed\n");
+    return NULL;
+  }
   tree->root = NULL;
   tree->size = 0;
   tree->height = -1;
@@ -45,6 +50,10 @@ void tree_destroy(struct tree_t* tree) {
 /* Creates a node for the given key and value (with no children). */
 struct tree_node_t* _node_create(char* key, struct data_t* value) {
   struct tree_node_t* newNode = malloc(SIZE_OF_TREE_NODE_T);
+  if (newNode == NULL) {
+    fprintf(stderr, "\nERR: _node_create: malloc failed\n");
+    return NULL;
+  }
   newNode->entry = entry_create(key, value);
   newNode->left = NULL;
   newNode->right = NULL;
@@ -184,7 +193,7 @@ int _tree_compute_height(struct tree_node_t* node) {
     return -1;
   }
   int height_of_left_tree = _tree_compute_height(node->left);
-  int height_of_right_tree =  _tree_compute_height(node->right);
+  int height_of_right_tree = _tree_compute_height(node->right);
   return 1 + _int_max(height_of_left_tree, height_of_right_tree);
 }
 
@@ -223,6 +232,10 @@ char** tree_get_keys(struct tree_t* tree) {
     return NULL;
   }
   char** keys = malloc(SIZE_OF_CHAR_POINTER * tree->size + SIZE_OF_NULL);
+  if (keys == NULL) {
+    fprintf(stderr, "\nERR: tree_get_keys: malloc failed\n");
+    return NULL;
+  }
   int last_index = _collect_keys(tree->root, keys, 0);
   keys[last_index] = NULL;
   return keys;
