@@ -13,15 +13,19 @@ SOURCES_DIR := source
 MODULES := serialization tree entry data
 TEST_EXECS := $(patsubst %,$(EXECS_DIR)/test_%, $(MODULES))
 
-DEBUG := # assign any value to enable CDEBUGFLAGS
+DEBUG := # assign any value to enable DEBUG_CFLAGS
 
 CC := gcc
-CDEBUGFLAGS := $(if $(DEBUG), -g -Wall,)
-CFLAGS := -I./include
+DEBUG_CFLAGS := -g -Wall
+INCLUDEHEADERS_CFLAGS := -I./include
+INCLUDEPROTOBUF_CFLAGS := -I/usr/local/include -L/usr/local/lib -lprotobuf-c
+
+COMPILE_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(if $(DEBUG), $(DEBUG_CFLAGS),)
+LINK_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(INCLUDEPROTOBUF_CFLAGS) $(if $(DEBUG), $(DEBUG_CFLAGS),)
 
 
 .PHONY: all
-all: clean link
+all: clean proto link
 
 .PHONY: link
 link: $(TEST_EXECS)
@@ -32,16 +36,22 @@ $(EXECS_DIR)/test_tree: $(OBJS_DIR)/test_tree.o $(OBJS_DIR)/tree.o \
 $(EXECS_DIR)/test_entry: $(OBJS_DIR)/test_entry.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(EXECS_DIR)/test_data: $(OBJS_DIR)/test_data.o $(OBJS_DIR)/data.o
 $(TEST_EXECS): %:
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $^ $(LINK_CFLAGS) -o $@
 	chmod 777 $@
 
 # compile
 $(OBJS_DIR)/%.o: $(SOURCES_DIR)/%.c
-	$(CC) $(CFLAGS)$(CDEBUGFLAGS) -c $^ -o $@
+	$(CC) $(COMPILE_CFLAGS) -c $^ -o $@
+
+.PHONY: proto
+proto: $(SOURCES_DIR)/sdmessage.pb-c.c
+$(SOURCES_DIR)/%.pb-c.c: %.proto
+	protoc-c sdmessage.proto --c_out=./$(SOURCES_DIR)
+	mv $(SOURCES_DIR)/$*.pb-c.h $(HEADERS_DIR)
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJS_DIR)/*.o $(EXECS_DIR)/*
+	rm -rf $(EXECS_DIR)/* $(HEADERS_DIR)/*.pb-c.h $(OBJS_DIR)/* $(SOURCES_DIR)/*.pb-c.c
 
 .PHONY: test
 test:
@@ -84,10 +94,10 @@ $(PRIVATE_TESTS_MODULE).exe: $(PRIVATE_TESTS_MODULE).o \
 							 $(OBJS_DIR)/tree.o \
 							 $(OBJS_DIR)/entry.o \
 							 $(OBJS_DIR)/data.o
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $^ $(LINK_CFLAGS) -o $@
 	chmod 777 $@
 $(PRIVATE_TESTS_MODULE).o: $(PRIVATE_TESTS_MODULE).c
-	$(CC) $(CFLAGS) -g -Wall -c $^ -o $@
+	$(CC) $(COMPILE_CFLAGS) -c $^ -o $@
 
 .PHONY: runPrivateTests
 runPrivateTests:
