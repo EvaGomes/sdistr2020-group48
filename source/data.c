@@ -12,8 +12,11 @@
 const int SIZE_OF_DATA_T = sizeof(struct data_t);
 
 struct data_t* data_create(int size) {
-  if (size <= 0) {
+  if (size < 0) {
     return NULL;
+  }
+  if (size == 0) {
+    return data_create2(0, NULL);
   }
   void* data = malloc(size);
   if (data == NULL) {
@@ -23,12 +26,16 @@ struct data_t* data_create(int size) {
   return data_create2(size, data);
 }
 
+int _areParamsInvalid(int size, void* data) {
+  return (size < 0) || (size != 0 && data == NULL);
+}
+
 struct data_t* data_create2(int size, void* data) {
-  if (size <= 0 || data == NULL) {
+  if (_areParamsInvalid(size, data)) {
     return NULL;
   }
   struct data_t* dataStruct = malloc(SIZE_OF_DATA_T);
-  if (data == NULL) {
+  if (dataStruct == NULL) {
     fprintf(stderr, "\nERR: data_create2: malloc failed\n");
     return NULL;
   }
@@ -45,8 +52,11 @@ void data_destroy(struct data_t* dataStruct) {
 }
 
 struct data_t* data_dup(struct data_t* dataStruct) {
-  if (dataStruct == NULL || dataStruct->datasize <= 0 || dataStruct->data == NULL) {
+  if (dataStruct == NULL || _areParamsInvalid(dataStruct->datasize, dataStruct->data)) {
     return NULL;
+  }
+  if (dataStruct->data == NULL) {
+    return data_create2(dataStruct->datasize, NULL);
   }
   int size = dataStruct->datasize;
   void* copied_data = malloc(size);
@@ -59,7 +69,7 @@ struct data_t* data_dup(struct data_t* dataStruct) {
 }
 
 void data_replace(struct data_t* dataStruct, int new_size, void* new_data) {
-  if (dataStruct != NULL) {
+  if (dataStruct != NULL && !_areParamsInvalid(new_size, new_data)) {
     free(dataStruct->data);
     dataStruct->datasize = new_size;
     dataStruct->data = new_data;

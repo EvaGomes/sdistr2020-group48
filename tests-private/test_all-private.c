@@ -11,6 +11,74 @@
 #include "./testutils.c"
 
 // **************************************************************
+// data.c
+// **************************************************************
+
+void test__data_create__datasize_0() {
+  printTestIntro("data.c", "data_create datasize=0");
+
+  struct data_t* dataStruct = data_create(0);
+  assert(dataStruct != NULL);
+  assert(dataStruct->datasize == 0);
+  assert(dataStruct->data == NULL);
+
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_create2__datasize_0__data_NULL() {
+  printTestIntro("data.c", "data_create2 datasize=0 data=NULL");
+
+  struct data_t* dataStruct = data_create2(0, NULL);
+  assert(dataStruct != NULL);
+  assert(dataStruct->datasize == 0);
+  assert(dataStruct->data == NULL);
+
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_create2__datasize_not0__data_NULL() {
+  printTestIntro("data.c", "data_create2 datasize=5 data=NULL");
+
+  struct data_t* dataStruct = data_create2(5, NULL);
+  assert(dataStruct == NULL);
+
+  printTestDone();
+}
+
+void test__data_dup__datasize_0__data_NULL() {
+  printTestIntro("data.c", "data_dup datasize=0 data=NULL");
+
+  struct data_t* dataStruct = data_create2(0, NULL);
+  struct data_t* copiedDataStruct = data_dup(dataStruct);
+  assert(copiedDataStruct != NULL);
+  assert(copiedDataStruct->datasize == 0);
+  assert(copiedDataStruct->data == NULL);
+
+  data_destroy(copiedDataStruct);
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_replace__datasize_0__data_NULL() {
+  printTestIntro("data.c", "data_replace datasize=0 data=NULL");
+
+  char* data = strdup("abc");
+  struct data_t* dataStruct = data_create2(strlen(data) + 1, data);
+  assert(dataStruct != NULL);
+  assert(dataStruct->datasize == strlen(data) + 1);
+  assert(dataStruct->data == data);
+
+  data_replace(dataStruct, 0, NULL);
+  assert(dataStruct->datasize == 0);
+  assert(dataStruct->data == NULL);
+
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+// **************************************************************
 // entry.c
 // **************************************************************
 
@@ -217,6 +285,12 @@ int main() {
   printf("-------------------------\n");
   printf("test_all-private\n");
   printf("-------------------------\n");
+
+  test__data_create__datasize_0();
+  test__data_create2__datasize_0__data_NULL();
+  test__data_create2__datasize_not0__data_NULL();
+  test__data_dup__datasize_0__data_NULL();
+  test__data_replace__datasize_0__data_NULL();
 
   test__entry_create__NULL_key_NULL_value();
   test__entry_destroy__NULL_key_NULL_value();

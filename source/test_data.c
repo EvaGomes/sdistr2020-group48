@@ -22,8 +22,8 @@ int testCreate() {
 	assert(data_create(-1) == NULL);
 	result = (data_create(-1) == NULL);
 
-	assert(data_create(0) == NULL);
-	result = result && (data_create(0) == NULL);
+	// assert(data_create(0) == NULL);
+	// result = result && (data_create(0) == NULL); // no longer what's expected in project2
 
 	if ((data = data_create(1024)) == NULL)
 		pee("  O teste não pode prosseguir");
@@ -53,8 +53,8 @@ int testCreate2() {
 	assert(data_create2(-1, data_s) == NULL);
 	result = (data_create2(-1, data_s) == NULL);
 
-    	assert(data_create2(0, data_s) == NULL);
-	result = result && (data_create2(0, data_s) == NULL);
+    // assert(data_create2(0, data_s) == NULL);
+	// result = result && (data_create2(0, data_s) == NULL); // no longer what's expected in project2
 
 	assert(data_create2(data_size, NULL) == NULL);
 	result = result && (data_create2(data_size, NULL) == NULL);
@@ -89,8 +89,8 @@ int testCreate3() {
 	assert(data_create2(-1, data_p) == NULL);
 	result = (data_create2(-1, data_p) == NULL);
 
-    	assert(data_create2(0, data_p) == NULL);
-	result = result && (data_create2(0, data_p) == NULL);
+    // 	assert(data_create2(0, data_p) == NULL);
+	// result = result && (data_create2(0, data_p) == NULL); // no longer what's expected in project2
 
 	assert(data_create2(data_size, NULL) == NULL);
 	result = result && (data_create2(data_size, NULL) == NULL);
