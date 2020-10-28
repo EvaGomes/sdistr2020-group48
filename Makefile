@@ -101,5 +101,4 @@ $(PRIVATE_TESTS_MODULE).o: $(PRIVATE_TESTS_MODULE).c
 
 .PHONY: runPrivateTests
 runPrivateTests:
-	./$(PRIVATE_TESTS_MODULE).exe
-	valgrind --leak-check=yes ./$(PRIVATE_TESTS_MODULE).exe
+	valgrind --leak-check=yes --quiet ./$(PRIVATE_TESTS_MODULE).exe

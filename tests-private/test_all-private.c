@@ -8,22 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// **************************************************************
-// testing utils
-// **************************************************************
-
-void printTestIntro(char* moduleName, char* testName) {
-  printf("\n%s -- %s", moduleName, testName);
-}
-
-void pee(const char* msg) {
-  perror(msg);
-  exit(0);
-}
-
-void printTestDone() {
-  printf(" --  PASSED");
-}
+#include "./testutils.c"
 
 // **************************************************************
 // entry.c
@@ -142,47 +127,49 @@ void test__entry_compare__NULL_keys() {
 // tree.c
 // **************************************************************
 
-void test__tree_with_7_nodes() {
-  printTestIntro("tree.c", "create and operate tree");
-
+struct tree_t* _createTreeWith7Nodes() {
   struct tree_t* tree = tree_create();
 
   int labels[] = {4, 3, 2, 1, 8, 9, 5};
-  const int num_of_nodes = sizeof(labels) / sizeof(int);
-
-  for (int i = 0; i < num_of_nodes; ++i) {
+  for (int i = 0; i < 7; ++i) {
     char key[5];
     sprintf(key, "key%d", labels[i]);
     char data[7];
     sprintf(data, "value%d", labels[i]);
     struct data_t* value = data_create2(strlen(data) + 1, data);
-
     tree_put(tree, key, value);
 
     free(value);
   }
 
+  return tree;
+}
+
+void test__tree_with_7_nodes() {
+  printTestIntro("tree.c", "create and operate tree with 7 nodes");
+
+  struct tree_t* tree = _createTreeWith7Nodes();
+
   assert(tree != NULL);
-  assert(tree->size == num_of_nodes);
+  assert(tree->size == 7);
   assert(tree->height == 3);
   assert(tree->root != NULL);
 
-  assert(strcmp(tree->root->entry->key, "key4") == 0);
-  assert(strcmp(tree->root->left->entry->key, "key3") == 0);
-  assert(strcmp(tree->root->left->left->entry->key, "key2") == 0);
-  assert(strcmp(tree->root->left->left->left->entry->key, "key1") == 0);
+  assertNodeHasKey(tree->root, "key4");
+  assertNodeHasKey(tree->root->left, "key3");
+  assertNodeHasKey(tree->root->left->left, "key2");
+  assertNodeHasKey(tree->root->left->left->left, "key1");
   assert(tree->root->left->left->right == NULL);
   assert(tree->root->left->right == NULL);
-  assert(strcmp(tree->root->right->entry->key, "key8") == 0);
-  assert(strcmp(tree->root->right->left->entry->key, "key5") == 0);
+  assertNodeHasKey(tree->root->right, "key8");
+  assertNodeHasKey(tree->root->right->left, "key5");
   assert(tree->root->right->left->left == NULL);
   assert(tree->root->right->left->right == NULL);
-  assert(strcmp(tree->root->right->right->entry->key, "key9") == 0);
+  assertNodeHasKey(tree->root->right->right, "key9");
   assert(tree->root->right->right->left == NULL);
   assert(tree->root->right->right->right == NULL);
 
   tree_destroy(tree);
-
   printTestDone();
 }
 
@@ -191,52 +178,29 @@ void test__tree_with_7_nodes() {
 // **************************************************************
 
 void test__tree_serialization() {
-  printTestIntro("tree.c", "tree_to_buffer and buffer_to_tree");
+  printTestIntro("serialization.c", "tree_to_buffer and buffer_to_tree");
 
-  struct tree_t* tree = tree_create();
-
-  int labels[] = {4, 3, 2, 1, 8, 9, 5};
-  const int num_of_nodes = sizeof(labels) / sizeof(int);
-
-  for (int i = 0; i < num_of_nodes; ++i) {
-    char key[5];
-    sprintf(key, "key%d", labels[i]);
-    char data[7];
-    sprintf(data, "value%d", labels[i]);
-    struct data_t* value = data_create2(strlen(data) + 1, data);
-
-    tree_put(tree, key, value);
-
-    free(value);
-  }
-
+  struct tree_t* tree = _createTreeWith7Nodes();
   char* serialized_tree;
   int len_serialized_tree = tree_to_buffer(tree, &serialized_tree);
   struct tree_t* deserialized_tree = buffer_to_tree(serialized_tree, len_serialized_tree);
 
   assert(deserialized_tree != NULL);
-  assert(deserialized_tree->size == num_of_nodes);
+  assert(deserialized_tree->size == 7);
   assert(deserialized_tree->height == 3);
   assert(deserialized_tree->root != NULL);
 
-  assert(strcmp(deserialized_tree->root->entry->key, "key4") == 0);
-  assert(strcmp(deserialized_tree->root->entry->value->data, "value4") == 0);
-  assert(strcmp(deserialized_tree->root->left->entry->key, "key3") == 0);
-  assert(strcmp(deserialized_tree->root->left->entry->value->data, "value3") == 0);
-  assert(strcmp(deserialized_tree->root->left->left->entry->key, "key2") == 0);
-  assert(strcmp(deserialized_tree->root->left->left->entry->value->data, "value2") == 0);
-  assert(strcmp(deserialized_tree->root->left->left->left->entry->key, "key1") == 0);
-  assert(strcmp(deserialized_tree->root->left->left->left->entry->value->data, "value1") == 0);
+  assertNodeHas(deserialized_tree->root, "key4", "value4");
+  assertNodeHas(deserialized_tree->root->left, "key3", "value3");
+  assertNodeHas(deserialized_tree->root->left->left, "key2", "value2");
+  assertNodeHas(deserialized_tree->root->left->left->left, "key1", "value1");
   assert(deserialized_tree->root->left->left->right == NULL);
   assert(deserialized_tree->root->left->right == NULL);
-  assert(strcmp(deserialized_tree->root->right->entry->key, "key8") == 0);
-  assert(strcmp(deserialized_tree->root->right->entry->value->data, "value8") == 0);
-  assert(strcmp(deserialized_tree->root->right->left->entry->key, "key5") == 0);
-  assert(strcmp(deserialized_tree->root->right->left->entry->value->data, "value5") == 0);
+  assertNodeHas(deserialized_tree->root->right, "key8", "value8");
+  assertNodeHas(deserialized_tree->root->right->left, "key5", "value5");
   assert(deserialized_tree->root->right->left->left == NULL);
   assert(deserialized_tree->root->right->left->right == NULL);
-  assert(strcmp(deserialized_tree->root->right->right->entry->key, "key9") == 0);
-  assert(strcmp(deserialized_tree->root->right->right->entry->value->data, "value9") == 0);
+  assertNodeHas(deserialized_tree->root->right->right, "key9", "value9");
   assert(deserialized_tree->root->right->right->left == NULL);
   assert(deserialized_tree->root->right->right->right == NULL);
 
