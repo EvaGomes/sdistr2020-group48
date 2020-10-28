@@ -83,6 +83,6 @@ runPrivateTests:
 		echo "----------------------------------" ; \
 		echo "$$i" ; \
 		echo "----------------------------------" ; \
-		valgrind --leak-check=yes --quiet ./$$i ; \
+		valgrind --leak-check=yes $(if $(DEBUG), --track-origins=yes, --quiet) ./$$i ; \
 		echo "----------------------------------\n" ; \
 	done
