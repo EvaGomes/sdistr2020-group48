@@ -277,6 +277,73 @@ void test__tree_del__existent_key() {
 // serialization.c
 // **************************************************************
 
+void test__data_serialization() {
+  printTestIntro("serialization.c", "data_to_buffer and buffer_to_data");
+
+  char* data = strdup("1234567890abc");
+  int datasize = strlen(data) + 1;
+  struct data_t* dataStruct = data_create2(datasize, data);
+
+  char* data_buf;
+  int len_data_buf = data_to_buffer(dataStruct, &data_buf);
+  assert(len_data_buf >= 0);
+  assert(len_data_buf == 2 + 14);
+  assert(data_buf != NULL);
+
+  struct data_t* deserialized = buffer_to_data(data_buf, len_data_buf);
+  assertDataEquals(deserialized, dataStruct);
+
+  data_destroy(deserialized);
+  free(data_buf);
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_serialization__NULL_data() {
+  printTestIntro("serialization.c", "data_to_buffer and buffer_to_data with NULL data");
+
+  struct data_t* dataStruct = data_create(0);
+
+  char* data_buf;
+  int len_data_buf = data_to_buffer(dataStruct, &data_buf);
+  assert(len_data_buf >= 0);
+  assert(len_data_buf == 0);
+  assert(data_buf != NULL);
+
+  struct data_t* deserialized = buffer_to_data(data_buf, len_data_buf);
+  assertDataEquals(deserialized, dataStruct);
+
+  data_destroy(deserialized);
+  free(data_buf);
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_serialization__big_data() {
+  printTestIntro("serialization.c", "data_to_buffer and buffer_to_data with biiiiig data");
+
+  int count = 5000;
+  int datasize = sizeof(long) * count;
+  long* data = malloc(datasize);
+  for (int i = 0; i < count; ++i) {
+    data[i] = 5 * (500000000 + i);
+  }
+  struct data_t* dataStruct = data_create2(datasize, data);
+
+  char* data_buf;
+  int len_data_buf = data_to_buffer(dataStruct, &data_buf);
+  assert(len_data_buf >= 0);
+  assert(len_data_buf == 4 + 40000);
+  assert(data_buf != NULL);
+
+  struct data_t* deserialized = buffer_to_data(data_buf, len_data_buf);
+  assertDataEquals(deserialized, dataStruct);
+
+  data_destroy(deserialized);
+  free(data_buf);
+  data_destroy(dataStruct);
+  printTestDone();
+}
 void test__tree_serialization() {
   printTestIntro("serialization.c", "tree_to_buffer and buffer_to_tree");
 
@@ -332,6 +399,9 @@ int main() {
   test__tree_get__unexistent_key();
   test__tree_del__existent_key();
 
+  test__data_serialization();
+  test__data_serialization__NULL_data();
+  test__data_serialization__big_data();
   test__tree_serialization();
 
   printf("\n\nDONE: No assertions failed!\n");

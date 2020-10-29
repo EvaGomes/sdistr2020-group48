@@ -23,7 +23,28 @@ void printTestDone() {
 // **************************************************************
 
 void assertStrEquals(char* actual, char* expected) {
-  assert(strcmp(actual, expected) == 0);
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(strcmp(actual, expected) == 0);
+  }
+}
+
+void assertEquals(void* actual, void* expected, int size) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(memcmp(actual, expected, size) == 0);
+  }
+}
+void assertDataEquals(struct data_t* actual, struct data_t* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assert(actual->datasize == expected->datasize);
+    assertEquals(actual->data, expected->data, expected->datasize);
+  }
 }
 
 void assertNodeHasKey(struct tree_node_t* actualNode, char* expectedKey) {

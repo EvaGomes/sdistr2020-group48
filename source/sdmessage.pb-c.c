@@ -7,6 +7,51 @@
 #endif
 
 #include "sdmessage.pb-c.h"
+void   data_message__init
+                     (DataMessage         *message)
+{
+  static const DataMessage init_value = DATA_MESSAGE__INIT;
+  *message = init_value;
+}
+size_t data_message__get_packed_size
+                     (const DataMessage *message)
+{
+  assert(message->base.descriptor == &data_message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t data_message__pack
+                     (const DataMessage *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &data_message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t data_message__pack_to_buffer
+                     (const DataMessage *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &data_message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+DataMessage *
+       data_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (DataMessage *)
+     protobuf_c_message_unpack (&data_message__descriptor,
+                                allocator, len, data);
+}
+void   data_message__free_unpacked
+                     (DataMessage *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &data_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   message_t__init
                      (MessageT         *message)
 {
@@ -52,6 +97,44 @@ void   message_t__free_unpacked
   assert(message->base.descriptor == &message_t__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+static const ProtobufCFieldDescriptor data_message__field_descriptors[1] =
+{
+  {
+    "data",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(DataMessage, data),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned data_message__field_indices_by_name[] = {
+  0,   /* field[0] = data */
+};
+static const ProtobufCIntRange data_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor data_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "DataMessage",
+  "DataMessage",
+  "DataMessage",
+  "",
+  sizeof(DataMessage),
+  1,
+  data_message__field_descriptors,
+  data_message__field_indices_by_name,
+  1,  data_message__number_ranges,
+  (ProtobufCMessageInit) data_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCEnumValue message_t__opcode__enum_values_by_number[8] =
 {
   { "OP_BAD", "MESSAGE_T__OPCODE__OP_BAD", 0 },

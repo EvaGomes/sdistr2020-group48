@@ -15,6 +15,7 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 
+typedef struct _DataMessage DataMessage;
 typedef struct _MessageT MessageT;
 
 
@@ -44,6 +45,16 @@ typedef enum _MessageT__CType {
 
 /* --- messages --- */
 
+struct  _DataMessage
+{
+  ProtobufCMessage base;
+  ProtobufCBinaryData data;
+};
+#define DATA_MESSAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&data_message__descriptor) \
+    , {0,NULL} }
+
+
 struct  _MessageT
 {
   ProtobufCMessage base;
@@ -57,6 +68,25 @@ struct  _MessageT
     , MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0, (char *)protobuf_c_empty_string }
 
 
+/* DataMessage methods */
+void   data_message__init
+                     (DataMessage         *message);
+size_t data_message__get_packed_size
+                     (const DataMessage   *message);
+size_t data_message__pack
+                     (const DataMessage   *message,
+                      uint8_t             *out);
+size_t data_message__pack_to_buffer
+                     (const DataMessage   *message,
+                      ProtobufCBuffer     *buffer);
+DataMessage *
+       data_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   data_message__free_unpacked
+                     (DataMessage *message,
+                      ProtobufCAllocator *allocator);
 /* MessageT methods */
 void   message_t__init
                      (MessageT         *message);
@@ -78,6 +108,9 @@ void   message_t__free_unpacked
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
+typedef void (*DataMessage_Closure)
+                 (const DataMessage *message,
+                  void *closure_data);
 typedef void (*MessageT_Closure)
                  (const MessageT *message,
                   void *closure_data);
@@ -87,6 +120,7 @@ typedef void (*MessageT_Closure)
 
 /* --- descriptors --- */
 
+extern const ProtobufCMessageDescriptor data_message__descriptor;
 extern const ProtobufCMessageDescriptor message_t__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__opcode__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__c_type__descriptor;

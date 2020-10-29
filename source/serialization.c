@@ -6,6 +6,7 @@
 
 #include "data.h"
 #include "entry.h"
+#include "sdmessage.pb-c.h"
 #include "tree-private.h"
 #include "tree.h"
 #include <stdio.h>
@@ -15,49 +16,56 @@
 const int SIZE_OF_DATASIZE = sizeof(int);
 const int SIZE_OF_INT = sizeof(int);
 
+DataMessage _data_to_msg(struct data_t* dataStruct) {
+  DataMessage msg;
+  data_message__init(&msg);
+  msg.data.len = dataStruct->datasize;
+  msg.data.data = dataStruct->data;
+  return msg;
+}
+
 int data_to_buffer(struct data_t* dataStruct, char** data_buf) {
   if (dataStruct == NULL || data_buf == NULL) {
     return -1;
   }
 
-  int* pointer_datasize = &(dataStruct->datasize);
-  void* pointer_data = dataStruct->data;
+  DataMessage msg = _data_to_msg(dataStruct);
+  int buffer_size = data_message__get_packed_size(&msg);
+  uint8_t* buffer = malloc(buffer_size);
+  if (buffer == NULL) {
+    fprintf(stderr, "\nERR: data_to_buffer: malloc failed\n");
+    return -1;
+  }
+  data_message__pack(&msg, buffer);
 
-  int len_datasize = SIZE_OF_DATASIZE;
-  int len_data = dataStruct->datasize;
+  *data_buf = (char*) buffer; // bytes are bytes!
+  return buffer_size;
+}
 
-  int index_datasize = 0;
-  int index_data = len_datasize;
-
-  int len_buffer = len_datasize + len_data;
-  char* buffer = malloc(len_buffer);
-  memcpy(buffer + index_datasize, pointer_datasize, len_datasize);
-  memcpy(buffer + index_data, pointer_data, len_data);
-
-  *data_buf = buffer;
-  return len_buffer;
+struct data_t* _msg_to_data(DataMessage* data_msg) {
+  int datasize = data_msg->data.len;
+  if (datasize == 0) {
+    return data_create(0);
+  }
+  void* data = malloc(datasize);
+  if (data == NULL) {
+    fprintf(stderr, "\nERR: _msg_to_data: malloc failed\n");
+    return NULL;
+  }
+  memcpy(data, data_msg->data.data, datasize);
+  return data_create2(datasize, data);
 }
 
 struct data_t* buffer_to_data(char* buffer, int buffer_size) {
-  if (buffer == NULL || buffer_size <= 0) {
+  if (buffer == NULL || buffer_size < 0) {
     return NULL;
   }
 
-  int datasize;
-  int len_datasize = SIZE_OF_DATASIZE;
-  int index_datasize = 0;
-  memcpy(&datasize, buffer + index_datasize, len_datasize);
+  DataMessage* msg = data_message__unpack(NULL, buffer_size, (uint8_t*) buffer);
+  struct data_t* data = _msg_to_data(msg);
 
-  void* data = malloc(datasize);
-  if (data == NULL) {
-    fprintf(stderr, "\nERR: buffer_to_data: malloc failed\n");
-    return NULL;
-  }
-  int len_data = datasize;
-  int index_data = index_datasize + len_datasize;
-  memcpy(data, buffer + index_data, len_data);
-
-  return data_create2(datasize, data);
+  data_message__free_unpacked(msg, NULL);
+  return data;
 }
 
 int entry_to_buffer(struct entry_t* entry, char** entry_buf) {

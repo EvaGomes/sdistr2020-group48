@@ -1,4 +1,15 @@
+/* Grupo 48
+ *   Eva Gomes (37806)
+ *   João Santos (40335)
+ *   João Vieira (45677)
+ */
+ 
 syntax = "proto3";
+
+message DataMessage {
+        bytes data = 1;
+}
+
 message message_t
  {
         enum Opcode {
