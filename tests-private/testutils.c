@@ -48,12 +48,19 @@ void assertDataEquals(struct data_t* actual, struct data_t* expected) {
 }
 
 void assertNodeHasKey(struct tree_node_t* actualNode, char* expectedKey) {
+  assert(actualNode != NULL);
   assertStrEquals(actualNode->entry->key, expectedKey);
 }
 
+void assertNodeHasKeyAndNullValue(struct tree_node_t* actualNode, char* expectedKey) {
+  assert(actualNode != NULL);
+  assertNodeHasKey(actualNode, expectedKey);
+  assert(actualNode->entry->value == NULL);
+}
+
 void assertNodeHas(struct tree_node_t* actualNode, char* expectedKey, char* expectedValueData) {
+  assert(actualNode != NULL);
   assertNodeHasKey(actualNode, expectedKey);
   assert(actualNode->entry->value != NULL);
-  assert(actualNode->entry->value->data != NULL);
   assertStrEquals(actualNode->entry->value->data, expectedValueData);
 }

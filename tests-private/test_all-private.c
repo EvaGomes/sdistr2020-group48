@@ -227,17 +227,78 @@ void test__tree_with_7_nodes() {
   assertNodeHasKey(tree->root->left, "key3");
   assertNodeHasKey(tree->root->left->left, "key2");
   assertNodeHasKey(tree->root->left->left->left, "key1");
-  assert(tree->root->left->left->right == NULL);
-  assert(tree->root->left->right == NULL);
+  /*     */ assert(tree->root->left->left->right == NULL);
+  /*     */ assert(tree->root->left->right == NULL);
   assertNodeHasKey(tree->root->right, "key8");
   assertNodeHasKey(tree->root->right->left, "key5");
-  assert(tree->root->right->left->left == NULL);
-  assert(tree->root->right->left->right == NULL);
+  /*     */ assert(tree->root->right->left->left == NULL);
+  /*     */ assert(tree->root->right->left->right == NULL);
   assertNodeHasKey(tree->root->right->right, "key9");
-  assert(tree->root->right->right->left == NULL);
-  assert(tree->root->right->right->right == NULL);
+  /*     */ assert(tree->root->right->right->left == NULL);
+  /*     */ assert(tree->root->right->right->right == NULL);
 
   tree_destroy(tree);
+  printTestDone();
+}
+
+void test__tree_with_NULLs() {
+  printTestIntro("tree.c", "create and operate tree with NULL keys, values and datas");
+
+  struct data_t* valueForNULLKey = data_create2(4, strdup("abc"));
+  struct data_t* valueForKey0 = data_create2(0, NULL);
+
+  struct tree_t* tree = _createTreeWith7Nodes();
+  tree_put(tree, NULL, valueForNULLKey);
+  tree_put(tree, "key6", NULL);
+  tree_put(tree, "key0", valueForKey0);
+
+  assert(tree != NULL);
+  assert(tree->size == 7 + 3);
+  assert(tree->height == 3 + 2);
+  assert(tree->root != NULL);
+
+  struct data_t* resultForNULLKey = tree_get(tree, NULL);
+  assertDataEquals(resultForNULLKey, valueForNULLKey);
+  struct data_t* resultForKey6 = tree_get(tree, "key6");
+  assertDataEquals(resultForKey6, NULL);
+  struct data_t* resultForKey0 = tree_get(tree, "key0");
+  assertDataEquals(resultForKey0, valueForKey0);
+
+  assertNodeHas(tree->root, "key4", "value4");
+  assertNodeHas(tree->root->left, "key3", "value3");
+  assertNodeHas(tree->root->left->left, "key2", "value2");
+  assertNodeHas(tree->root->left->left->left, "key1", "value1");
+  assertNodeHas(tree->root->left->left->left->left, NULL, "abc");
+  /*  */ assert(tree->root->left->left->left->left->left == NULL);
+  assertNodeHas(tree->root->left->left->left->left->right, "key0", NULL);
+  /*  */ assert(tree->root->left->left->left->left->right->left == NULL);
+  /*  */ assert(tree->root->left->left->left->left->right->right == NULL);
+  /*  */ assert(tree->root->left->left->left->right == NULL);
+  /*  */ assert(tree->root->left->left->right == NULL);
+  /*  */ assert(tree->root->left->right == NULL);
+  assertNodeHas(tree->root->right, "key8", "value8");
+  assertNodeHas(tree->root->right->left, "key5", "value5");
+  /*  */ assert(tree->root->right->left->left == NULL);
+  assertNodeHasKeyAndNullValue(tree->root->right->left->right, "key6");
+  /*  */ assert(tree->root->right->left->right->left == NULL);
+  /*  */ assert(tree->root->right->left->right->right == NULL);
+  assertNodeHas(tree->root->right->right, "key9", "value9");
+  /*  */ assert(tree->root->right->right->left == NULL);
+  /*  */ assert(tree->root->right->right->right == NULL);
+
+  assert(tree_del(tree, NULL) >= 0);
+  assert(tree_del(tree, "key6") >= 0);
+  assert(tree_del(tree, "key0") >= 0);
+  assert(tree->size == 7);
+  assert(tree->height == 3);
+
+  data_destroy(resultForKey0);
+  data_destroy(resultForKey6);
+  data_destroy(resultForNULLKey);
+  tree_destroy(tree);
+  data_destroy(valueForKey0);
+  data_destroy(valueForNULLKey);
+
   printTestDone();
 }
 
@@ -468,33 +529,50 @@ void test__entry_serialization__NULL_key_and_NULL_value() {
 void test__tree_serialization() {
   printTestIntro("serialization.c", "tree_to_buffer and buffer_to_tree");
 
+  struct data_t* valueForNULLKey = data_create2(4, strdup("abc"));
+  struct data_t* valueForKey0 = data_create2(0, NULL);
+
   struct tree_t* tree = _createTreeWith7Nodes();
+  tree_put(tree, NULL, valueForNULLKey);
+  tree_put(tree, "key6", NULL);
+  tree_put(tree, "key0", valueForKey0);
+
   char* serialized_tree;
   int len_serialized_tree = tree_to_buffer(tree, &serialized_tree);
   struct tree_t* deserialized_tree = buffer_to_tree(serialized_tree, len_serialized_tree);
 
   assert(deserialized_tree != NULL);
-  assert(deserialized_tree->size == 7);
-  assert(deserialized_tree->height == 3);
+  assert(deserialized_tree->size == 7 + 3);
+  assert(deserialized_tree->height == 3 + 2);
   assert(deserialized_tree->root != NULL);
 
   assertNodeHas(deserialized_tree->root, "key4", "value4");
   assertNodeHas(deserialized_tree->root->left, "key3", "value3");
   assertNodeHas(deserialized_tree->root->left->left, "key2", "value2");
   assertNodeHas(deserialized_tree->root->left->left->left, "key1", "value1");
-  assert(deserialized_tree->root->left->left->right == NULL);
-  assert(deserialized_tree->root->left->right == NULL);
+  assertNodeHas(deserialized_tree->root->left->left->left->left, NULL, "abc");
+  /*  */ assert(deserialized_tree->root->left->left->left->left->left == NULL);
+  assertNodeHas(deserialized_tree->root->left->left->left->left->right, "key0", NULL);
+  /*  */ assert(deserialized_tree->root->left->left->left->left->right->left == NULL);
+  /*  */ assert(deserialized_tree->root->left->left->left->left->right->right == NULL);
+  /*  */ assert(deserialized_tree->root->left->left->left->right == NULL);
+  /*  */ assert(deserialized_tree->root->left->left->right == NULL);
+  /*  */ assert(deserialized_tree->root->left->right == NULL);
   assertNodeHas(deserialized_tree->root->right, "key8", "value8");
   assertNodeHas(deserialized_tree->root->right->left, "key5", "value5");
-  assert(deserialized_tree->root->right->left->left == NULL);
-  assert(deserialized_tree->root->right->left->right == NULL);
+  /*  */ assert(deserialized_tree->root->right->left->left == NULL);
+  assertNodeHasKeyAndNullValue(deserialized_tree->root->right->left->right, "key6");
+  /*  */ assert(deserialized_tree->root->right->left->right->left == NULL);
+  /*  */ assert(deserialized_tree->root->right->left->right->right == NULL);
   assertNodeHas(deserialized_tree->root->right->right, "key9", "value9");
-  assert(deserialized_tree->root->right->right->left == NULL);
-  assert(deserialized_tree->root->right->right->right == NULL);
+  /*  */ assert(deserialized_tree->root->right->right->left == NULL);
+  /*  */ assert(deserialized_tree->root->right->right->right == NULL);
 
   tree_destroy(deserialized_tree);
   free(serialized_tree);
   tree_destroy(tree);
+  data_destroy(valueForKey0);
+  data_destroy(valueForNULLKey);
 
   printTestDone();
 }
@@ -517,6 +595,7 @@ int main() {
   test__entry_compare__NULL_keys();
 
   test__tree_with_7_nodes();
+  test__tree_with_NULLs();
   test__tree_get__unexistent_key();
   test__tree_del__existent_key();
 
