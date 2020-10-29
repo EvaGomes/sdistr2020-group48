@@ -16,6 +16,7 @@ PROTOBUF_C__BEGIN_DECLS
 
 
 typedef struct _DataMessage DataMessage;
+typedef struct _EntryMessage EntryMessage;
 typedef struct _MessageT MessageT;
 
 
@@ -55,6 +56,17 @@ struct  _DataMessage
     , {0,NULL} }
 
 
+struct  _EntryMessage
+{
+  ProtobufCMessage base;
+  char *key;
+  DataMessage *value;
+};
+#define ENTRY_MESSAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&entry_message__descriptor) \
+    , (char *)protobuf_c_empty_string, NULL }
+
+
 struct  _MessageT
 {
   ProtobufCMessage base;
@@ -87,6 +99,25 @@ DataMessage *
 void   data_message__free_unpacked
                      (DataMessage *message,
                       ProtobufCAllocator *allocator);
+/* EntryMessage methods */
+void   entry_message__init
+                     (EntryMessage         *message);
+size_t entry_message__get_packed_size
+                     (const EntryMessage   *message);
+size_t entry_message__pack
+                     (const EntryMessage   *message,
+                      uint8_t             *out);
+size_t entry_message__pack_to_buffer
+                     (const EntryMessage   *message,
+                      ProtobufCBuffer     *buffer);
+EntryMessage *
+       entry_message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   entry_message__free_unpacked
+                     (EntryMessage *message,
+                      ProtobufCAllocator *allocator);
 /* MessageT methods */
 void   message_t__init
                      (MessageT         *message);
@@ -111,6 +142,9 @@ void   message_t__free_unpacked
 typedef void (*DataMessage_Closure)
                  (const DataMessage *message,
                   void *closure_data);
+typedef void (*EntryMessage_Closure)
+                 (const EntryMessage *message,
+                  void *closure_data);
 typedef void (*MessageT_Closure)
                  (const MessageT *message,
                   void *closure_data);
@@ -121,6 +155,7 @@ typedef void (*MessageT_Closure)
 /* --- descriptors --- */
 
 extern const ProtobufCMessageDescriptor data_message__descriptor;
+extern const ProtobufCMessageDescriptor entry_message__descriptor;
 extern const ProtobufCMessageDescriptor message_t__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__opcode__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__c_type__descriptor;

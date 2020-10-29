@@ -10,6 +10,11 @@ message DataMessage {
         bytes data = 1;
 }
 
+message EntryMessage {
+	string key = 1;
+        DataMessage value = 2;
+}
+
 message message_t
  {
         enum Opcode {

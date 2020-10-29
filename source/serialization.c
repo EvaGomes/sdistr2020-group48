@@ -69,59 +69,42 @@ struct data_t* buffer_to_data(char* buffer, int buffer_size) {
 }
 
 int entry_to_buffer(struct entry_t* entry, char** entry_buf) {
-  if (entry == NULL || entry->key == NULL || entry->value == NULL || entry_buf == NULL) {
+  if (entry == NULL || entry_buf == NULL) {
     return -1;
   }
 
-  char* value;
+  EntryMessage msg;
+  entry_message__init(&msg);
+  msg.key = entry->key;
+  if (entry->value != NULL) {
+    DataMessage dataMsg = _data_to_msg(entry->value);
+    msg.value = &dataMsg;
+  }
 
-  int len_len_key = sizeof(int);
-  int len_key = strlen(entry->key) + 1;
-  int len_value = data_to_buffer(entry->value, &value);
-
-  int index_len_key = 0;
-  int index_key = len_len_key;
-  int index_value = len_len_key + len_key;
-
-  int buffer_size = len_len_key + len_key + len_value;
-  char* buffer = malloc(buffer_size);
+  int buffer_size = entry_message__get_packed_size(&msg);
+  uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
     fprintf(stderr, "\nERR: entry_to_buffer: malloc failed\n");
     return -1;
   }
-  memcpy(buffer + index_len_key, &len_key, len_len_key);
-  memcpy(buffer + index_key, entry->key, len_key);
-  memcpy(buffer + index_value, value, len_value);
+  entry_message__pack(&msg, buffer);
 
-  free(value);
-
-  *entry_buf = buffer;
+  *entry_buf = (char*) buffer;
   return buffer_size;
 }
 
 struct entry_t* buffer_to_entry(char* buffer, int buffer_size) {
-  if (buffer == NULL || buffer_size <= 0) {
+  if (buffer == NULL || buffer_size < 0) {
     return NULL;
   }
 
-  int len_key;
-  int len_len_key = sizeof(len_key);
-  int index_len_key = 0;
-  memcpy(&len_key, buffer + index_len_key, len_len_key);
+  EntryMessage* msg = entry_message__unpack(NULL, buffer_size, (uint8_t*) buffer);
+  char* key = (msg->key == NULL || strlen(msg->key) == 0) ? NULL : strdup(msg->key);
+  struct data_t* value = (msg->value == NULL) ? NULL : _msg_to_data(msg->value);
+  struct entry_t* entry = entry_create(key, value);
 
-  char* key = malloc(len_key);
-  if (key == NULL) {
-    fprintf(stderr, "\nERR: buffer_to_entry: malloc failed\n");
-    return NULL;
-  }
-  int index_key = index_len_key + len_len_key;
-  memcpy(key, buffer + index_key, len_key);
-
-  int index_value = index_key + len_key;
-  int len_value = buffer_size - index_value;
-  struct data_t* value = buffer_to_data(buffer + index_value, len_value);
-
-  return entry_create(key, value);
+  entry_message__free_unpacked(msg, NULL);
+  return entry;
 }
 
 /* Core recursive algorithm to collect the entry_to_buffer of each node of the tree

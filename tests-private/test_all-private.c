@@ -344,6 +344,127 @@ void test__data_serialization__big_data() {
   data_destroy(dataStruct);
   printTestDone();
 }
+
+void test__entry_serialization() {
+  printTestIntro("serialization.c", "entry_to_buffer and buffer_to_entry");
+
+  char* key = strdup("leKey");
+  char* data = strdup("1234567890abc");
+  int datasize = strlen(data) + 1;
+  struct data_t* value = data_create2(datasize, data);
+  struct entry_t* entry = entry_create(key, value);
+
+  char* serialized;
+  int len_serialized = entry_to_buffer(entry, &serialized);
+  assert(len_serialized >= 0);
+  assert(len_serialized == 25);
+  assert(serialized != NULL);
+
+  struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
+  assert(deserialized != NULL);
+  assertStrEquals(deserialized->key, key);
+  assertDataEquals(deserialized->value, value);
+
+  entry_destroy(deserialized);
+  free(serialized);
+  entry_destroy(entry);
+  printTestDone();
+}
+
+void test__entry_serialization__NULL_key() {
+  printTestIntro("serialization.c", "entry_to_buffer and buffer_to_entry with NULL key");
+
+  char* data = strdup("1234567890abc");
+  int datasize = strlen(data) + 1;
+  struct data_t* value = data_create2(datasize, data);
+  struct entry_t* entry = entry_create(NULL, value);
+
+  char* serialized;
+  int len_serialized = entry_to_buffer(entry, &serialized);
+  assert(len_serialized >= 0);
+  assert(len_serialized == 18);
+  assert(serialized != NULL);
+
+  struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
+  assert(deserialized != NULL);
+  assert(deserialized->key == NULL);
+  assertDataEquals(deserialized->value, value);
+
+  entry_destroy(deserialized);
+  free(serialized);
+  entry_destroy(entry);
+  printTestDone();
+}
+
+void test__entry_serialization__NULL_value() {
+  printTestIntro("serialization.c", "entry_to_buffer and buffer_to_entry with NULL value");
+
+  char* key = strdup("leKey");
+  struct entry_t* entry = entry_create(key, NULL);
+
+  char* serialized;
+  int len_serialized = entry_to_buffer(entry, &serialized);
+  assert(len_serialized >= 0);
+  assert(len_serialized == 7);
+  assert(serialized != NULL);
+
+  struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
+  assert(deserialized != NULL);
+  assertStrEquals(deserialized->key, key);
+  assert(deserialized->value == NULL);
+
+  entry_destroy(deserialized);
+  free(serialized);
+  entry_destroy(entry);
+  printTestDone();
+}
+
+void test__entry_serialization__NULL_data() {
+  printTestIntro("serialization.c", "entry_to_buffer and buffer_to_entry with NULL data");
+
+  char* key = strdup("leKey");
+  struct data_t* value = data_create2(0, NULL);
+  struct entry_t* entry = entry_create(key, value);
+
+  char* serialized;
+  int len_serialized = entry_to_buffer(entry, &serialized);
+  assert(len_serialized >= 0);
+  assert(len_serialized == 9);
+  assert(serialized != NULL);
+
+  struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
+  assert(deserialized != NULL);
+  assertStrEquals(deserialized->key, key);
+  assertDataEquals(deserialized->value, value);
+
+  entry_destroy(deserialized);
+  free(serialized);
+  entry_destroy(entry);
+  printTestDone();
+}
+
+void test__entry_serialization__NULL_key_and_NULL_value() {
+  printTestIntro("serialization.c", "entry_to_buffer and buffer_to_entry with NULL value");
+
+  struct entry_t* entry = entry_create(NULL, NULL);
+
+  char* serialized;
+  int len_serialized = entry_to_buffer(entry, &serialized);
+  assert(len_serialized >= 0);
+  assert(len_serialized == 0);
+  assert(serialized != NULL);
+
+  struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
+  assert(deserialized != NULL);
+  assert(deserialized->key == NULL);
+  assert(deserialized->value == NULL);
+
+  entry_destroy(deserialized);
+  free(serialized);
+  entry_destroy(entry);
+  printTestDone();
+}
+
 void test__tree_serialization() {
   printTestIntro("serialization.c", "tree_to_buffer and buffer_to_tree");
 
@@ -402,6 +523,11 @@ int main() {
   test__data_serialization();
   test__data_serialization__NULL_data();
   test__data_serialization__big_data();
+  test__entry_serialization();
+  test__entry_serialization__NULL_key();
+  test__entry_serialization__NULL_value();
+  test__entry_serialization__NULL_data();
+  test__entry_serialization__NULL_key_and_NULL_value();
   test__tree_serialization();
 
   printf("\n\nDONE: No assertions failed!\n");

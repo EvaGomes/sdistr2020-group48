@@ -3,5 +3,5 @@
 
 ## Known limitations:
 - Tree does not balance itself when inserting new nodes.
-- Serialization of entries does not handle entries with null keys or null values.
+- (solved) ~~Serialization of entries does not handle entries with null keys or null values.~~
 - Serialization of trees does not handle entries with null keys or null values.
