@@ -10,20 +10,29 @@
 
 #include <errno.h>
 
-int _test_args(int argc) {
-  if (argc != 3) { // TODO: change to 2
-    errno = EINVAL;
-    strerror(errno);
-    printf("Usage: ./tree_client <server-ip>:<server-port> <str>\n");
-    printf(" E.g.: ./tree_client 127.0.0.1:9000 some_str-value\n");
-    return -1;
-  }
-  return 0;
+char* collect_input() {
+
+  char* input_str = malloc(MAX_MSG * sizeof(char));
+  printf("> ");
+  fgets(input_str, MAX_MSG, stdin);
+
+  // prune: free over occupied space and drop \n at the end
+  int input_str_len = strlen(input_str);
+  char last_char = input_str[input_str_len - 1];
+  int str_len = (last_char == '\n') ? (input_str_len - 1) : input_str_len;
+  char* str = strndup(input_str, str_len);
+  free(input_str);
+
+  return str;
 }
 
 int main(int argc, char** argv) {
 
-  if (_test_args(argc) < 0) {
+  if (argc != 2) {
+    errno = EINVAL;
+    fprintf(stderr, "Invalid number of arguments\n");
+    printf("Usage: ./tree_client <server-ip>:<server-port>\n");
+    printf(" E.g.: ./tree_client 127.0.0.1:9000\n");
     return -1;
   }
 
@@ -31,35 +40,33 @@ int main(int argc, char** argv) {
   if (rtree == NULL) {
     return -1;
   }
-  
+
   int sockfd = rtree->sockfd;
 
-  // Copia os primeiros bytes da string (no máximo MAX_MSG-1) passada como argumento
-  char str[MAX_MSG];
-  strncpy(str, argv[2], MAX_MSG - 1);
-  // Garante que a string tem terminação. Se era maior que MAX_MSG será truncada.
-  str[MAX_MSG - 1] = '\0';
+  while (1) {
 
-  int nbytes;
+    char* input_str = collect_input();
+    int input_str_len = strlen(input_str);
 
-  // Envia string
-  if ((nbytes = write(sockfd, str, strlen(str))) != strlen(str)) {
-    perror("Erro ao enviar dados ao servidor");
-    close(sockfd);
-    return -1;
+    int nbytes;
+
+    if ((nbytes = write(sockfd, input_str, input_str_len)) != input_str_len) {
+      fprintf(stderr, "Error while sending request-data to server\n  data=%s\n", input_str);
+      free(input_str);
+      continue;
+    }
+
+    free(input_str);
+    printf("Waiting for a server response...\n");
+
+    int count;
+    if ((nbytes = read(sockfd, &count, sizeof(count))) != sizeof(count)) {
+      fprintf(stderr, "Error while reading response-data from the server\n");
+      continue;
+    };
+
+    printf("< Server response: len= %d \n", ntohl(count));
   }
-
-  printf("À espera de resposta do servidor ...\n");
-
-  // Recebe tamanho da string
-  int count;
-  if ((nbytes = read(sockfd, &count, sizeof(count))) != sizeof(count)) {
-    perror("Erro ao receber dados do servidor");
-    close(sockfd);
-    return -1;
-  };
-
-  printf("O tamanho da string é %d!\n", ntohl(count));
 
   return rtree_disconnect(rtree);
 }

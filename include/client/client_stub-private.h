@@ -9,7 +9,7 @@
 
 struct rtree_t {
   char* server_ip_address;
-  short server_port;
+  int server_port;
   int sockfd;
 };
 

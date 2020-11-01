@@ -55,25 +55,28 @@ int network_main_loop(int listening_socket) {
   // socket pronta a comunicar com o cliente.
   while ((connsockfd = accept(listening_socket, (struct sockaddr*) &client, &size_client)) != -1) {
 
+    printf("Accepted client connection; connsockfd=%d", connsockfd);
+
     // Lê string (no máximo MAX_MSG bytes) enviada pelo cliente
     // através da socket
     if ((nbytes = read(connsockfd, str, MAX_MSG)) < 0) {
-      perror("Erro ao receber dados do cliente");
+      perror("Error while reading request-data from client");
       close(connsockfd);
       continue;
     }
+
+    printf("Got data from client");
+
     // Coloca terminador de string
     str[nbytes] = '\0';
-
     // Conta número de carateres
     count = strlen(str);
-
     // Converte count para formato de rede
     count = htonl(count);
 
     // Envia tamanho da string ao cliente através da socket
     if ((nbytes = write(connsockfd, &count, sizeof(count))) != sizeof(count)) {
-      perror("Erro ao enviar resposta ao cliente");
+      perror("Error while sending response-data to the client");
       close(connsockfd);
       continue;
     }
