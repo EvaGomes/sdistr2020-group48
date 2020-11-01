@@ -5,6 +5,7 @@
  */
 
 #include "data.h"
+#include "data-private.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,21 +52,26 @@ void data_destroy(struct data_t* dataStruct) {
   }
 }
 
+void* copy(void* something, int size) {
+  if (something == NULL) {
+    return NULL;
+  }
+  void* copy = malloc(size);
+  if (copy == NULL) {
+    fprintf(stderr, "\nERR: copy: malloc failed\n");
+    return NULL;
+  }
+  memcpy(copy, something, size);
+  return copy;
+}
+
 struct data_t* data_dup(struct data_t* dataStruct) {
   if (dataStruct == NULL || _areParamsInvalid(dataStruct->datasize, dataStruct->data)) {
     return NULL;
   }
-  if (dataStruct->data == NULL) {
-    return data_create2(dataStruct->datasize, NULL);
-  }
-  int size = dataStruct->datasize;
-  void* copied_data = malloc(size);
-  if (copied_data == NULL) {
-    fprintf(stderr, "\nERR: data_dup: malloc failed\n");
-    return NULL;
-  }
-  memcpy(copied_data, dataStruct->data, size);
-  return data_create2(size, copied_data);
+  int datasize = dataStruct->datasize;
+  void* copied_data = copy(dataStruct->data, datasize);
+  return data_create2(datasize, copied_data);
 }
 
 void data_replace(struct data_t* dataStruct, int new_size, void* new_data) {

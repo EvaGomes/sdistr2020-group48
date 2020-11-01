@@ -26,6 +26,7 @@ void assertStrEquals(char* actual, char* expected) {
   if (expected == NULL) {
     assert(actual == NULL);
   } else {
+    assert(actual != NULL);
     assert(strcmp(actual, expected) == 0);
   }
 }
@@ -34,9 +35,11 @@ void assertEquals(void* actual, void* expected, int size) {
   if (expected == NULL) {
     assert(actual == NULL);
   } else {
+    assert(actual != NULL);
     assert(memcmp(actual, expected, size) == 0);
   }
 }
+
 void assertDataEquals(struct data_t* actual, struct data_t* expected) {
   if (expected == NULL) {
     assert(actual == NULL);
@@ -44,6 +47,30 @@ void assertDataEquals(struct data_t* actual, struct data_t* expected) {
     assert(actual != NULL);
     assert(actual->datasize == expected->datasize);
     assertEquals(actual->data, expected->data, expected->datasize);
+  }
+}
+
+void assertEntryEquals(struct entry_t* actual, struct entry_t* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assertStrEquals(actual->key, expected->key);
+    assertDataEquals(actual->value, expected->value);
+  }
+}
+
+void assertStrArrEquals(char** actual, char** expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    int current_index = 0;
+    while (expected[current_index] != NULL) {
+      assertStrEquals(actual[current_index], expected[current_index]);
+      current_index += 1;
+    }
+    assert(actual[current_index] == NULL);
   }
 }
 

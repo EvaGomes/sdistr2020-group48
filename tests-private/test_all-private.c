@@ -1,5 +1,9 @@
+#include "data-private.h"
 #include "data.h"
 #include "entry.h"
+#include "message-private.h"
+#include "sdmessage.pb-c.h"
+#include "serialization-private.h"
 #include "serialization.h"
 #include "tree-private.h"
 #include "tree.h"
@@ -9,6 +13,50 @@
 #include <string.h>
 
 #include "./testutils.c"
+
+// **************************************************************
+// data-private.h - data.c
+// **************************************************************
+
+void test__copy() {
+  printTestIntro("data.c", "copy");
+
+  char* stringData = strdup("abc");
+  int stringData_size = strlen(stringData) + 1; // 4
+  char* stringData_copy = copy(stringData, stringData_size);
+  assertStrEquals(stringData_copy, stringData);
+
+  free(stringData_copy);
+  free(stringData);
+  printTestDone();
+}
+
+void test__copy__NULL() {
+  printTestIntro("data.c", "copy NULL");
+
+  assert(copy(NULL, 0) == NULL);
+  assert(copy(NULL, 999) == NULL);
+  assert(copy(NULL, -3) == NULL);
+
+  printTestDone();
+}
+
+void test__copy__big_data() {
+  printTestIntro("data.c", "copy");
+
+  int count = 5000;
+  int biiiiigData_size = sizeof(long) * count; // 40000
+  long* biiiiigData = malloc(biiiiigData_size);
+  for (int i = 0; i < count; ++i) {
+    biiiiigData[i] = 5 * (500000000 + i);
+  }
+  void* biiiiigData_copy = copy(biiiiigData, biiiiigData_size);
+  assertEquals(biiiiigData_copy, biiiiigData, biiiiigData_size);
+
+  free(biiiiigData_copy);
+  free(biiiiigData);
+  printTestDone();
+}
 
 // **************************************************************
 // data.c
@@ -335,6 +383,121 @@ void test__tree_del__existent_key() {
 }
 
 // **************************************************************
+// message-private.c
+// **************************************************************
+
+void test__data_to_msg__NULL() {
+  printTestIntro("message-private.c", "data_to_msg and msg_to_data with NULL");
+
+  assert(data_to_msg(NULL) == NULL);
+  assert(msg_to_data(NULL) == NULL);
+
+  printTestDone();
+}
+
+void test__data_to_msg__empty_string_data() {
+  printTestIntro("message-private.c", "data_to_msg and msg_to_data with empty string");
+
+  char* data = strdup("");
+  int datasize = strlen(data) + 1;
+  struct data_t* dataStruct = data_create2(datasize, data);
+
+  DataMessage* msg = data_to_msg(dataStruct);
+  assert(msg != NULL);
+  assert(msg->data.len == datasize);
+  assertStrEquals((char*) msg->data.data, data);
+
+  struct data_t* dataStructFromMsg = msg_to_data(msg);
+  assertDataEquals(dataStructFromMsg, dataStruct);
+
+  data_destroy(dataStructFromMsg);
+  data_message__free_unpacked(msg, NULL);
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_to_msg() {
+  printTestIntro("message-private.c", "data_to_msg and msg_to_data");
+
+  char* data = strdup("1234567890abc");
+  int datasize = strlen(data) + 1;
+  struct data_t* dataStruct = data_create2(datasize, data);
+
+  DataMessage* msg = data_to_msg(dataStruct);
+  assert(msg != NULL);
+  assert(msg->data.len == datasize);
+  assertStrEquals((char*) msg->data.data, data);
+
+  struct data_t* dataStructFromMsg = msg_to_data(msg);
+  assertDataEquals(dataStructFromMsg, dataStruct);
+
+  data_destroy(dataStructFromMsg);
+  data_message__free_unpacked(msg, NULL);
+  data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__keys_to_msg__NULL() {
+  printTestIntro("message-private.c", "keys_to_msg and msg_to_keys with NULL");
+
+  assert(keys_to_msg(NULL) == NULL);
+  assert(msg_to_keys(NULL) == NULL);
+
+  printTestDone();
+}
+
+void test__keys_to_msg__no_keys() {
+  printTestIntro("message-private.c", "keys_to_msg and msg_to_keys with 0 keys");
+
+  char* keys[1] = {NULL};
+
+  KeysMessage* msg = keys_to_msg(keys);
+  assert(msg != NULL);
+  assert(msg->n_keys == 1);
+  assert(msg->keys != NULL);
+  assert(msg->keys[0] == NULL);
+
+  char** keys_from_msg = msg_to_keys(msg);
+  assertStrArrEquals(keys_from_msg, keys);
+
+  tree_free_keys(keys_from_msg);
+  keys_message__free_unpacked(msg, NULL);
+  printTestDone();
+}
+
+void test__keys_to_msg() {
+  printTestIntro("message-private.c", "keys_to_msg and msg_to_keys");
+
+  char* key0 = strdup("key0");
+  char* key1 = strdup("k");
+  char* key2 = strdup("key2");
+  char* keys[5] = {key0, key1, key2, NULL};
+
+  KeysMessage* msg = keys_to_msg(keys);
+  assert(msg != NULL);
+  assert(msg->n_keys == 4);
+  assert(msg->keys != NULL);
+  assert(msg->keys[0] != NULL);
+  assertStrEquals(msg->keys[0]->str, key0);
+  assert(msg->keys[1] != NULL);
+  assertStrEquals(msg->keys[1]->str, key1);
+  assert(msg->keys[2] != NULL);
+  assertStrEquals(msg->keys[2]->str, key2);
+  assert(msg->keys[3] == NULL);
+
+  char** keys_from_msg = msg_to_keys(msg);
+  assertStrArrEquals(keys_from_msg, keys);
+
+  tree_free_keys(keys_from_msg);
+  keys_message__free_unpacked(msg, NULL);
+  free(key2);
+  free(key1);
+  free(key0);
+
+  printTestDone();
+}
+
+// **************************************************************
 // serialization.c
 // **************************************************************
 
@@ -357,6 +520,23 @@ void test__data_serialization() {
   data_destroy(deserialized);
   free(data_buf);
   data_destroy(dataStruct);
+  printTestDone();
+}
+
+void test__data_serialization__NULL_data_t() {
+  printTestIntro("serialization.c", "data_to_buffer and buffer_to_data with NULL data_t");
+
+  char* data_buf;
+  int len_data_buf = data_to_buffer(NULL, &data_buf);
+  assert(len_data_buf >= 0);
+  assert(len_data_buf == 0);
+  assert(data_buf != NULL);
+
+  struct data_t* deserialized = buffer_to_data(data_buf, len_data_buf);
+  assertDataEquals(deserialized, NULL);
+
+  data_destroy(deserialized);
+  free(data_buf);
   printTestDone();
 }
 
@@ -418,7 +598,7 @@ void test__entry_serialization() {
   char* serialized;
   int len_serialized = entry_to_buffer(entry, &serialized);
   assert(len_serialized >= 0);
-  assert(len_serialized == 25);
+  assert(len_serialized == 27);
   assert(serialized != NULL);
 
   struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
@@ -466,7 +646,7 @@ void test__entry_serialization__NULL_value() {
   char* serialized;
   int len_serialized = entry_to_buffer(entry, &serialized);
   assert(len_serialized >= 0);
-  assert(len_serialized == 7);
+  assert(len_serialized == 9);
   assert(serialized != NULL);
 
   struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
@@ -490,7 +670,7 @@ void test__entry_serialization__NULL_data() {
   char* serialized;
   int len_serialized = entry_to_buffer(entry, &serialized);
   assert(len_serialized >= 0);
-  assert(len_serialized == 9);
+  assert(len_serialized == 11);
   assert(serialized != NULL);
 
   struct entry_t* deserialized = buffer_to_entry(serialized, len_serialized);
@@ -581,6 +761,10 @@ void test__tree_serialization() {
 
 int main() {
 
+  test__copy();
+  test__copy__NULL();
+  test__copy__big_data();
+
   test__data_create__datasize_0();
   test__data_create2__datasize_0__data_NULL();
   test__data_create2__datasize_not0__data_NULL();
@@ -598,6 +782,13 @@ int main() {
   test__tree_with_NULLs();
   test__tree_get__unexistent_key();
   test__tree_del__existent_key();
+
+  test__data_to_msg__NULL();
+  test__data_to_msg__empty_string_data();
+  test__data_to_msg();
+  test__keys_to_msg__NULL();
+  test__keys_to_msg__no_keys();
+  test__keys_to_msg();
 
   test__data_serialization();
   test__data_serialization__NULL_data();

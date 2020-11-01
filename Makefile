@@ -40,7 +40,7 @@ link: $(EXECS)
 $(EXECS_DIR)/tree_client: $(LIBS_DIR)/client-lib.o \
                           $(OBJS_DIR)/$(CLIENT_SUBDIR)/tree_client.o
 $(EXECS_DIR)/tree_server: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
-                          $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/serialization.o \
+                          $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
                           $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
                           $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
 						  $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_server.o
@@ -88,10 +88,12 @@ cleanPrivateTests:
 .PHONY: linkPrivateTests
 linkPrivateTests: $(TESTS_EXECS)
 $(TESTS_DIR)/test_all-private.exe: $(TESTS_DIR)/test_all-private.o \
-								   $(OBJS_DIR)/serialization.o $(OBJS_DIR)/sdmessage.pb-c.o \
+								   $(OBJS_DIR)/serialization.o \
+								   $(OBJS_DIR)/message-private.o $(OBJS_DIR)/sdmessage.pb-c.o \
 								   $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(TESTS_DIR)/test_serialization.exe: $(TESTS_DIR)/test_serialization.o \
-									 $(OBJS_DIR)/serialization.o $(OBJS_DIR)/sdmessage.pb-c.o \
+									 $(OBJS_DIR)/serialization.o \
+									 $(OBJS_DIR)/message-private.o $(OBJS_DIR)/sdmessage.pb-c.o \
 									 $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
 $(TESTS_DIR)/test_tree.exe: $(TESTS_DIR)/test_tree.o \
 							$(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o

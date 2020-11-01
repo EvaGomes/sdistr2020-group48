@@ -6,6 +6,7 @@
 
 #include "data.h"
 #include "entry.h"
+#include "message-private.h"
 #include "sdmessage.pb-c.h"
 #include "tree-private.h"
 #include "tree.h"
@@ -13,47 +14,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_DATASIZE = sizeof(int);
 const int SIZE_OF_INT = sizeof(int);
-
-DataMessage _data_to_msg(struct data_t* dataStruct) {
-  DataMessage msg;
-  data_message__init(&msg);
-  msg.data.len = dataStruct->datasize;
-  msg.data.data = dataStruct->data;
-  return msg;
-}
 
 int data_to_buffer(struct data_t* dataStruct, char** data_buf) {
   if (dataStruct == NULL || data_buf == NULL) {
     return -1;
   }
 
-  DataMessage msg = _data_to_msg(dataStruct);
-  int buffer_size = data_message__get_packed_size(&msg);
+  DataMessage* msg = data_to_msg(dataStruct);
+  if (msg == NULL) {
+    return -1;
+  }
+
+  int buffer_size = data_message__get_packed_size(msg);
   uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
     fprintf(stderr, "\nERR: data_to_buffer: malloc failed\n");
     return -1;
   }
-  data_message__pack(&msg, buffer);
+  data_message__pack(msg, buffer);
+
+  data_message__free_unpacked(msg, NULL);
 
   *data_buf = (char*) buffer; // bytes are bytes!
   return buffer_size;
-}
-
-struct data_t* _msg_to_data(DataMessage* data_msg) {
-  int datasize = data_msg->data.len;
-  if (datasize == 0) {
-    return data_create(0);
-  }
-  void* data = malloc(datasize);
-  if (data == NULL) {
-    fprintf(stderr, "\nERR: _msg_to_data: malloc failed\n");
-    return NULL;
-  }
-  memcpy(data, data_msg->data.data, datasize);
-  return data_create2(datasize, data);
 }
 
 struct data_t* buffer_to_data(char* buffer, int buffer_size) {
@@ -62,9 +46,9 @@ struct data_t* buffer_to_data(char* buffer, int buffer_size) {
   }
 
   DataMessage* msg = data_message__unpack(NULL, buffer_size, (uint8_t*) buffer);
-  struct data_t* data = _msg_to_data(msg);
-
+  struct data_t* data = msg_to_data(msg);
   data_message__free_unpacked(msg, NULL);
+  
   return data;
 }
 
@@ -73,21 +57,20 @@ int entry_to_buffer(struct entry_t* entry, char** entry_buf) {
     return -1;
   }
 
-  EntryMessage msg;
-  entry_message__init(&msg);
-  msg.key = entry->key;
-  if (entry->value != NULL) {
-    DataMessage dataMsg = _data_to_msg(entry->value);
-    msg.value = &dataMsg;
+  EntryMessage* msg = entry_to_msg(entry);
+  if (msg == NULL) {
+    return -1;
   }
 
-  int buffer_size = entry_message__get_packed_size(&msg);
+  int buffer_size = entry_message__get_packed_size(msg);
   uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
     fprintf(stderr, "\nERR: entry_to_buffer: malloc failed\n");
     return -1;
   }
-  entry_message__pack(&msg, buffer);
+  entry_message__pack(msg, buffer);
+
+  entry_message__free_unpacked(msg, NULL);
 
   *entry_buf = (char*) buffer;
   return buffer_size;
@@ -99,11 +82,9 @@ struct entry_t* buffer_to_entry(char* buffer, int buffer_size) {
   }
 
   EntryMessage* msg = entry_message__unpack(NULL, buffer_size, (uint8_t*) buffer);
-  char* key = (msg->key == NULL || strlen(msg->key) == 0) ? NULL : strdup(msg->key);
-  struct data_t* value = (msg->value == NULL) ? NULL : _msg_to_data(msg->value);
-  struct entry_t* entry = entry_create(key, value);
-
+  struct entry_t* entry = msg_to_entry(msg);
   entry_message__free_unpacked(msg, NULL);
+
   return entry;
 }
 
