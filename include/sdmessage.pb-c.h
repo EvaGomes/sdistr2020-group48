@@ -16,33 +16,46 @@ PROTOBUF_C__BEGIN_DECLS
 
 
 typedef struct _DataMessage DataMessage;
+typedef struct _NullableString NullableString;
 typedef struct _EntryMessage EntryMessage;
-typedef struct _MessageT MessageT;
+typedef struct _KeysMessage KeysMessage;
+typedef struct _Message Message;
 
 
 /* --- enums --- */
 
-typedef enum _MessageT__Opcode {
-  MESSAGE_T__OPCODE__OP_BAD = 0,
-  MESSAGE_T__OPCODE__OP_SIZE = 10,
-  MESSAGE_T__OPCODE__OP_DEL = 20,
-  MESSAGE_T__OPCODE__OP_GET = 30,
-  MESSAGE_T__OPCODE__OP_PUT = 40,
-  MESSAGE_T__OPCODE__OP_GETKEYS = 50,
-  MESSAGE_T__OPCODE__OP_HEIGHT = 60,
-  MESSAGE_T__OPCODE__OP_ERROR = 99
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE_T__OPCODE)
-} MessageT__Opcode;
-typedef enum _MessageT__CType {
-  MESSAGE_T__C_TYPE__CT_BAD = 0,
-  MESSAGE_T__C_TYPE__CT_KEY = 10,
-  MESSAGE_T__C_TYPE__CT_VALUE = 20,
-  MESSAGE_T__C_TYPE__CT_ENTRY = 30,
-  MESSAGE_T__C_TYPE__CT_KEYS = 40,
-  MESSAGE_T__C_TYPE__CT_RESULT = 50,
-  MESSAGE_T__C_TYPE__CT_NONE = 60
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE_T__C_TYPE)
-} MessageT__CType;
+typedef enum _Message__OperationCode {
+  MESSAGE__OPERATION_CODE__OP_BAD = 0,
+  /*
+   * Identifies the query tree_size in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_SIZE = 10,
+  /*
+   * Identifies the operation tree_del in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_DEL = 20,
+  /*
+   * Identifies the query tree_get in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_GET = 30,
+  /*
+   * Identifies the operation tree_put in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_PUT = 40,
+  /*
+   * Identifies the query tree_get_keys in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_GETKEYS = 50,
+  /*
+   * Identifies the query tree_height in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_HEIGHT = 60,
+  /*
+   * Identifies a failed query/operation in a response message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_ERROR = 99
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE__OPERATION_CODE)
+} Message__OperationCode;
 
 /* --- messages --- */
 
@@ -56,28 +69,73 @@ struct  _DataMessage
     , {0,NULL} }
 
 
+struct  _NullableString
+{
+  ProtobufCMessage base;
+  char *str;
+};
+#define NULLABLE_STRING__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&nullable_string__descriptor) \
+    , (char *)protobuf_c_empty_string }
+
+
 struct  _EntryMessage
 {
   ProtobufCMessage base;
-  char *key;
+  NullableString *key;
   DataMessage *value;
 };
 #define ENTRY_MESSAGE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&entry_message__descriptor) \
-    , (char *)protobuf_c_empty_string, NULL }
+    , NULL, NULL }
 
 
-struct  _MessageT
+struct  _KeysMessage
 {
   ProtobufCMessage base;
-  MessageT__Opcode opcode;
-  MessageT__CType c_type;
-  int32_t data_size;
-  char *data;
+  size_t n_keys;
+  NullableString **keys;
 };
-#define MESSAGE_T__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&message_t__descriptor) \
-    , MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0, (char *)protobuf_c_empty_string }
+#define KEYS_MESSAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&keys_message__descriptor) \
+    , 0,NULL }
+
+
+typedef enum {
+  MESSAGE__CONTENT__NOT_SET = 0,
+  MESSAGE__CONTENT_KEY = 10,
+  MESSAGE__CONTENT_VALUE = 20,
+  MESSAGE__CONTENT_ENTRY = 30,
+  MESSAGE__CONTENT_KEYS = 40,
+  MESSAGE__CONTENT_INT_RESULT = 50
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE__CONTENT)
+} Message__ContentCase;
+
+/*
+ * A message
+ * - sent by the client to the server representing a query or operation over the tree; or
+ * - sent by the server to the client representing the response to a query or operation.
+ */
+struct  _Message
+{
+  ProtobufCMessage base;
+  /*
+   * Identifies the query/operation being requested/responded in this message; or
+   * OP_ERROR if this is a response-message and the invoked query/operation failed.
+   */
+  Message__OperationCode op_code;
+  Message__ContentCase content_case;
+  union {
+    NullableString *key;
+    DataMessage *value;
+    EntryMessage *entry;
+    KeysMessage *keys;
+    int32_t int_result;
+  };
+};
+#define MESSAGE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&message__descriptor) \
+    , MESSAGE__OPERATION_CODE__OP_BAD, MESSAGE__CONTENT__NOT_SET, {0} }
 
 
 /* DataMessage methods */
@@ -99,6 +157,25 @@ DataMessage *
 void   data_message__free_unpacked
                      (DataMessage *message,
                       ProtobufCAllocator *allocator);
+/* NullableString methods */
+void   nullable_string__init
+                     (NullableString         *message);
+size_t nullable_string__get_packed_size
+                     (const NullableString   *message);
+size_t nullable_string__pack
+                     (const NullableString   *message,
+                      uint8_t             *out);
+size_t nullable_string__pack_to_buffer
+                     (const NullableString   *message,
+                      ProtobufCBuffer     *buffer);
+NullableString *
+       nullable_string__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   nullable_string__free_unpacked
+                     (NullableString *message,
+                      ProtobufCAllocator *allocator);
 /* EntryMessage methods */
 void   entry_message__init
                      (EntryMessage         *message);
@@ -118,35 +195,60 @@ EntryMessage *
 void   entry_message__free_unpacked
                      (EntryMessage *message,
                       ProtobufCAllocator *allocator);
-/* MessageT methods */
-void   message_t__init
-                     (MessageT         *message);
-size_t message_t__get_packed_size
-                     (const MessageT   *message);
-size_t message_t__pack
-                     (const MessageT   *message,
+/* KeysMessage methods */
+void   keys_message__init
+                     (KeysMessage         *message);
+size_t keys_message__get_packed_size
+                     (const KeysMessage   *message);
+size_t keys_message__pack
+                     (const KeysMessage   *message,
                       uint8_t             *out);
-size_t message_t__pack_to_buffer
-                     (const MessageT   *message,
+size_t keys_message__pack_to_buffer
+                     (const KeysMessage   *message,
                       ProtobufCBuffer     *buffer);
-MessageT *
-       message_t__unpack
+KeysMessage *
+       keys_message__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   message_t__free_unpacked
-                     (MessageT *message,
+void   keys_message__free_unpacked
+                     (KeysMessage *message,
+                      ProtobufCAllocator *allocator);
+/* Message methods */
+void   message__init
+                     (Message         *message);
+size_t message__get_packed_size
+                     (const Message   *message);
+size_t message__pack
+                     (const Message   *message,
+                      uint8_t             *out);
+size_t message__pack_to_buffer
+                     (const Message   *message,
+                      ProtobufCBuffer     *buffer);
+Message *
+       message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   message__free_unpacked
+                     (Message *message,
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*DataMessage_Closure)
                  (const DataMessage *message,
                   void *closure_data);
+typedef void (*NullableString_Closure)
+                 (const NullableString *message,
+                  void *closure_data);
 typedef void (*EntryMessage_Closure)
                  (const EntryMessage *message,
                   void *closure_data);
-typedef void (*MessageT_Closure)
-                 (const MessageT *message,
+typedef void (*KeysMessage_Closure)
+                 (const KeysMessage *message,
+                  void *closure_data);
+typedef void (*Message_Closure)
+                 (const Message *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -155,10 +257,11 @@ typedef void (*MessageT_Closure)
 /* --- descriptors --- */
 
 extern const ProtobufCMessageDescriptor data_message__descriptor;
+extern const ProtobufCMessageDescriptor nullable_string__descriptor;
 extern const ProtobufCMessageDescriptor entry_message__descriptor;
-extern const ProtobufCMessageDescriptor message_t__descriptor;
-extern const ProtobufCEnumDescriptor    message_t__opcode__descriptor;
-extern const ProtobufCEnumDescriptor    message_t__c_type__descriptor;
+extern const ProtobufCMessageDescriptor keys_message__descriptor;
+extern const ProtobufCMessageDescriptor message__descriptor;
+extern const ProtobufCEnumDescriptor    message__operation_code__descriptor;
 
 PROTOBUF_C__END_DECLS
 

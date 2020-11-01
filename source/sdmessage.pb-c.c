@@ -52,6 +52,51 @@ void   data_message__free_unpacked
   assert(message->base.descriptor == &data_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   nullable_string__init
+                     (NullableString         *message)
+{
+  static const NullableString init_value = NULLABLE_STRING__INIT;
+  *message = init_value;
+}
+size_t nullable_string__get_packed_size
+                     (const NullableString *message)
+{
+  assert(message->base.descriptor == &nullable_string__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t nullable_string__pack
+                     (const NullableString *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &nullable_string__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t nullable_string__pack_to_buffer
+                     (const NullableString *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &nullable_string__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+NullableString *
+       nullable_string__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (NullableString *)
+     protobuf_c_message_unpack (&nullable_string__descriptor,
+                                allocator, len, data);
+}
+void   nullable_string__free_unpacked
+                     (NullableString *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &nullable_string__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   entry_message__init
                      (EntryMessage         *message)
 {
@@ -97,49 +142,94 @@ void   entry_message__free_unpacked
   assert(message->base.descriptor == &entry_message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   message_t__init
-                     (MessageT         *message)
+void   keys_message__init
+                     (KeysMessage         *message)
 {
-  static const MessageT init_value = MESSAGE_T__INIT;
+  static const KeysMessage init_value = KEYS_MESSAGE__INIT;
   *message = init_value;
 }
-size_t message_t__get_packed_size
-                     (const MessageT *message)
+size_t keys_message__get_packed_size
+                     (const KeysMessage *message)
 {
-  assert(message->base.descriptor == &message_t__descriptor);
+  assert(message->base.descriptor == &keys_message__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t message_t__pack
-                     (const MessageT *message,
+size_t keys_message__pack
+                     (const KeysMessage *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &message_t__descriptor);
+  assert(message->base.descriptor == &keys_message__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t message_t__pack_to_buffer
-                     (const MessageT *message,
+size_t keys_message__pack_to_buffer
+                     (const KeysMessage *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &message_t__descriptor);
+  assert(message->base.descriptor == &keys_message__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-MessageT *
-       message_t__unpack
+KeysMessage *
+       keys_message__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (MessageT *)
-     protobuf_c_message_unpack (&message_t__descriptor,
+  return (KeysMessage *)
+     protobuf_c_message_unpack (&keys_message__descriptor,
                                 allocator, len, data);
 }
-void   message_t__free_unpacked
-                     (MessageT *message,
+void   keys_message__free_unpacked
+                     (KeysMessage *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &message_t__descriptor);
+  assert(message->base.descriptor == &keys_message__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   message__init
+                     (Message         *message)
+{
+  static const Message init_value = MESSAGE__INIT;
+  *message = init_value;
+}
+size_t message__get_packed_size
+                     (const Message *message)
+{
+  assert(message->base.descriptor == &message__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t message__pack
+                     (const Message *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &message__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t message__pack_to_buffer
+                     (const Message *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &message__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Message *
+       message__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Message *)
+     protobuf_c_message_unpack (&message__descriptor,
+                                allocator, len, data);
+}
+void   message__free_unpacked
+                     (Message *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 static const ProtobufCFieldDescriptor data_message__field_descriptors[1] =
@@ -180,17 +270,55 @@ const ProtobufCMessageDescriptor data_message__descriptor =
   (ProtobufCMessageInit) data_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
+static const ProtobufCFieldDescriptor nullable_string__field_descriptors[1] =
+{
+  {
+    "str",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(NullableString, str),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned nullable_string__field_indices_by_name[] = {
+  0,   /* field[0] = str */
+};
+static const ProtobufCIntRange nullable_string__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor nullable_string__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "NullableString",
+  "NullableString",
+  "NullableString",
+  "",
+  sizeof(NullableString),
+  1,
+  nullable_string__field_descriptors,
+  nullable_string__field_indices_by_name,
+  1,  nullable_string__number_ranges,
+  (ProtobufCMessageInit) nullable_string__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCFieldDescriptor entry_message__field_descriptors[2] =
 {
   {
     "key",
     1,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
+    PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
     offsetof(EntryMessage, key),
+    &nullable_string__descriptor,
     NULL,
-    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
@@ -231,21 +359,59 @@ const ProtobufCMessageDescriptor entry_message__descriptor =
   (ProtobufCMessageInit) entry_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue message_t__opcode__enum_values_by_number[8] =
+static const ProtobufCFieldDescriptor keys_message__field_descriptors[1] =
 {
-  { "OP_BAD", "MESSAGE_T__OPCODE__OP_BAD", 0 },
-  { "OP_SIZE", "MESSAGE_T__OPCODE__OP_SIZE", 10 },
-  { "OP_DEL", "MESSAGE_T__OPCODE__OP_DEL", 20 },
-  { "OP_GET", "MESSAGE_T__OPCODE__OP_GET", 30 },
-  { "OP_PUT", "MESSAGE_T__OPCODE__OP_PUT", 40 },
-  { "OP_GETKEYS", "MESSAGE_T__OPCODE__OP_GETKEYS", 50 },
-  { "OP_HEIGHT", "MESSAGE_T__OPCODE__OP_HEIGHT", 60 },
-  { "OP_ERROR", "MESSAGE_T__OPCODE__OP_ERROR", 99 },
+  {
+    "keys",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(KeysMessage, n_keys),
+    offsetof(KeysMessage, keys),
+    &nullable_string__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
-static const ProtobufCIntRange message_t__opcode__value_ranges[] = {
+static const unsigned keys_message__field_indices_by_name[] = {
+  0,   /* field[0] = keys */
+};
+static const ProtobufCIntRange keys_message__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor keys_message__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "KeysMessage",
+  "KeysMessage",
+  "KeysMessage",
+  "",
+  sizeof(KeysMessage),
+  1,
+  keys_message__field_descriptors,
+  keys_message__field_indices_by_name,
+  1,  keys_message__number_ranges,
+  (ProtobufCMessageInit) keys_message__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCEnumValue message__operation_code__enum_values_by_number[8] =
+{
+  { "OP_BAD", "MESSAGE__OPERATION_CODE__OP_BAD", 0 },
+  { "OP_SIZE", "MESSAGE__OPERATION_CODE__OP_SIZE", 10 },
+  { "OP_DEL", "MESSAGE__OPERATION_CODE__OP_DEL", 20 },
+  { "OP_GET", "MESSAGE__OPERATION_CODE__OP_GET", 30 },
+  { "OP_PUT", "MESSAGE__OPERATION_CODE__OP_PUT", 40 },
+  { "OP_GETKEYS", "MESSAGE__OPERATION_CODE__OP_GETKEYS", 50 },
+  { "OP_HEIGHT", "MESSAGE__OPERATION_CODE__OP_HEIGHT", 60 },
+  { "OP_ERROR", "MESSAGE__OPERATION_CODE__OP_ERROR", 99 },
+};
+static const ProtobufCIntRange message__operation_code__value_ranges[] = {
 {0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{99, 7},{0, 8}
 };
-static const ProtobufCEnumValueIndex message_t__opcode__enum_values_by_name[8] =
+static const ProtobufCEnumValueIndex message__operation_code__enum_values_by_name[8] =
 {
   { "OP_BAD", 0 },
   { "OP_DEL", 2 },
@@ -256,133 +422,126 @@ static const ProtobufCEnumValueIndex message_t__opcode__enum_values_by_name[8] =
   { "OP_PUT", 4 },
   { "OP_SIZE", 1 },
 };
-const ProtobufCEnumDescriptor message_t__opcode__descriptor =
+const ProtobufCEnumDescriptor message__operation_code__descriptor =
 {
   PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "message_t.Opcode",
-  "Opcode",
-  "MessageT__Opcode",
+  "Message.OperationCode",
+  "OperationCode",
+  "Message__OperationCode",
   "",
   8,
-  message_t__opcode__enum_values_by_number,
+  message__operation_code__enum_values_by_number,
   8,
-  message_t__opcode__enum_values_by_name,
+  message__operation_code__enum_values_by_name,
   8,
-  message_t__opcode__value_ranges,
+  message__operation_code__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCEnumValue message_t__c_type__enum_values_by_number[7] =
-{
-  { "CT_BAD", "MESSAGE_T__C_TYPE__CT_BAD", 0 },
-  { "CT_KEY", "MESSAGE_T__C_TYPE__CT_KEY", 10 },
-  { "CT_VALUE", "MESSAGE_T__C_TYPE__CT_VALUE", 20 },
-  { "CT_ENTRY", "MESSAGE_T__C_TYPE__CT_ENTRY", 30 },
-  { "CT_KEYS", "MESSAGE_T__C_TYPE__CT_KEYS", 40 },
-  { "CT_RESULT", "MESSAGE_T__C_TYPE__CT_RESULT", 50 },
-  { "CT_NONE", "MESSAGE_T__C_TYPE__CT_NONE", 60 },
-};
-static const ProtobufCIntRange message_t__c_type__value_ranges[] = {
-{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{0, 7}
-};
-static const ProtobufCEnumValueIndex message_t__c_type__enum_values_by_name[7] =
-{
-  { "CT_BAD", 0 },
-  { "CT_ENTRY", 3 },
-  { "CT_KEY", 1 },
-  { "CT_KEYS", 4 },
-  { "CT_NONE", 6 },
-  { "CT_RESULT", 5 },
-  { "CT_VALUE", 2 },
-};
-const ProtobufCEnumDescriptor message_t__c_type__descriptor =
-{
-  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "message_t.C_type",
-  "C_type",
-  "MessageT__CType",
-  "",
-  7,
-  message_t__c_type__enum_values_by_number,
-  7,
-  message_t__c_type__enum_values_by_name,
-  7,
-  message_t__c_type__value_ranges,
-  NULL,NULL,NULL,NULL   /* reserved[1234] */
-};
-static const ProtobufCFieldDescriptor message_t__field_descriptors[4] =
+static const ProtobufCFieldDescriptor message__field_descriptors[6] =
 {
   {
-    "opcode",
+    "op_code",
     1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(MessageT, opcode),
-    &message_t__opcode__descriptor,
+    offsetof(Message, op_code),
+    &message__operation_code__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "c_type",
-    2,
+    "key",
+    10,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_ENUM,
-    0,   /* quantifier_offset */
-    offsetof(MessageT, c_type),
-    &message_t__c_type__descriptor,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Message, content_case),
+    offsetof(Message, key),
+    &nullable_string__descriptor,
     NULL,
-    0,             /* flags */
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "data_size",
-    3,
+    "value",
+    20,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Message, content_case),
+    offsetof(Message, value),
+    &data_message__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "entry",
+    30,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Message, content_case),
+    offsetof(Message, entry),
+    &entry_message__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "keys",
+    40,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Message, content_case),
+    offsetof(Message, keys),
+    &keys_message__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "int_result",
+    50,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_SINT32,
-    0,   /* quantifier_offset */
-    offsetof(MessageT, data_size),
+    offsetof(Message, content_case),
+    offsetof(Message, int_result),
     NULL,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "data",
-    4,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(MessageT, data),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned message_t__field_indices_by_name[] = {
-  1,   /* field[1] = c_type */
-  3,   /* field[3] = data */
-  2,   /* field[2] = data_size */
-  0,   /* field[0] = opcode */
+static const unsigned message__field_indices_by_name[] = {
+  3,   /* field[3] = entry */
+  5,   /* field[5] = int_result */
+  1,   /* field[1] = key */
+  4,   /* field[4] = keys */
+  0,   /* field[0] = op_code */
+  2,   /* field[2] = value */
 };
-static const ProtobufCIntRange message_t__number_ranges[1 + 1] =
+static const ProtobufCIntRange message__number_ranges[6 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 10, 1 },
+  { 20, 2 },
+  { 30, 3 },
+  { 40, 4 },
+  { 50, 5 },
+  { 0, 6 }
 };
-const ProtobufCMessageDescriptor message_t__descriptor =
+const ProtobufCMessageDescriptor message__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "message_t",
-  "MessageT",
-  "MessageT",
+  "Message",
+  "Message",
+  "Message",
   "",
-  sizeof(MessageT),
-  4,
-  message_t__field_descriptors,
-  message_t__field_indices_by_name,
-  1,  message_t__number_ranges,
-  (ProtobufCMessageInit) message_t__init,
+  sizeof(Message),
+  6,
+  message__field_descriptors,
+  message__field_indices_by_name,
+  6,  message__number_ranges,
+  (ProtobufCMessageInit) message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

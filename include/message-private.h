@@ -9,8 +9,9 @@
 
 #include "sdmessage.pb-c.h"
 
+/* A wrapper for a Message. */
 struct message_t {
-  MessageT msg;
+  Message* msg;
 };
 
 #endif
