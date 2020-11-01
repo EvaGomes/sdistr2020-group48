@@ -4,6 +4,7 @@
  *   João Vieira (45677)
  */
 
+#include "message-private.h"
 #include "sdmessage.pb-c.h"
 #include "tree.h"
 
