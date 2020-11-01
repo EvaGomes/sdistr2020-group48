@@ -12,6 +12,7 @@ const int SIZE_OF_DATA_MESSAGE = sizeof(DataMessage);
 const int SIZE_OF_ENTRY_MESSAGE = sizeof(EntryMessage);
 const int SIZE_OF_KEYS_MESSAGE = sizeof(KeysMessage);
 const int SIZE_OF_MESSAGE = sizeof(Message);
+const int SIZE_OF_MESSAGE_T = sizeof(struct message_t);
 const int SIZE_OF_NULLABLE_STRING = sizeof(NullableString);
 
 DataMessage* data_to_msg(struct data_t* dataStruct) {
@@ -102,12 +103,15 @@ KeysMessage* keys_to_msg(char** keys) {
   }
   keys_message__init(msg);
   int keys_count = _keys_count(keys);
-  msg->n_keys = keys_count + 1; // include last entry, which is NULL
-  msg->keys = malloc(msg->n_keys * sizeof(NullableString*));
+  msg->n_keys = keys_count;
+  if (keys_count == 0) {
+    return msg;
+  }
+
+  msg->keys = malloc(keys_count * sizeof(NullableString*));
   for (int i = 0; i < keys_count; ++i) {
     msg->keys[i] = string_to_msg(keys[i]);
   }
-  msg->keys[keys_count] = NULL;
   return msg;
 }
 
@@ -115,9 +119,39 @@ char** msg_to_keys(KeysMessage* msg) {
   if (msg == NULL) {
     return NULL;
   }
-  char** keys = malloc(msg->n_keys * sizeof(char*));
-  for (int i = 0; i < msg->n_keys; ++i) {
+  int n_keys = msg->n_keys;
+  char** keys = malloc((n_keys + 1) * sizeof(char*));
+  for (int i = 0; i < n_keys; ++i) {
     keys[i] = msg_to_string(msg->keys[i]);
   }
+  keys[n_keys] = NULL;
   return keys;
+}
+
+struct message_t* message_create() {
+  Message* msg = malloc(SIZE_OF_MESSAGE);
+  if (msg == NULL) {
+    fprintf(stderr, "\nERR: message_create: malloc 1 failed\n");
+    return NULL;
+  }
+  message__init(msg);
+
+  struct message_t* message = malloc(SIZE_OF_MESSAGE_T);
+  if (message == NULL) {
+    fprintf(stderr, "\nERR: message_create: malloc 2 failed\n");
+    free(msg);
+    return NULL;
+  }
+  message->msg = msg;
+
+  return message;
+}
+
+void message_destroy(struct message_t* message) {
+  if (message != NULL) {
+    if (message->msg != NULL) {
+      message__free_unpacked(message->msg, NULL);
+    }
+    free(message);
+  }
 }

@@ -453,9 +453,8 @@ void test__keys_to_msg__no_keys() {
 
   KeysMessage* msg = keys_to_msg(keys);
   assert(msg != NULL);
-  assert(msg->n_keys == 1);
-  assert(msg->keys != NULL);
-  assert(msg->keys[0] == NULL);
+  assert(msg->n_keys == 0);
+  assert(msg->keys == NULL);
 
   char** keys_from_msg = msg_to_keys(msg);
   assertStrArrEquals(keys_from_msg, keys);
@@ -471,11 +470,11 @@ void test__keys_to_msg() {
   char* key0 = strdup("key0");
   char* key1 = strdup("k");
   char* key2 = strdup("key2");
-  char* keys[5] = {key0, key1, key2, NULL};
+  char* keys[4] = {key0, key1, key2, NULL};
 
   KeysMessage* msg = keys_to_msg(keys);
   assert(msg != NULL);
-  assert(msg->n_keys == 4);
+  assert(msg->n_keys == 3);
   assert(msg->keys != NULL);
   assert(msg->keys[0] != NULL);
   assertStrEquals(msg->keys[0]->str, key0);
@@ -483,7 +482,6 @@ void test__keys_to_msg() {
   assertStrEquals(msg->keys[1]->str, key1);
   assert(msg->keys[2] != NULL);
   assertStrEquals(msg->keys[2]->str, key2);
-  assert(msg->keys[3] == NULL);
 
   char** keys_from_msg = msg_to_keys(msg);
   assertStrArrEquals(keys_from_msg, keys);
@@ -757,6 +755,152 @@ void test__tree_serialization() {
   printTestDone();
 }
 
+void test__message_serialization__CT_NONE() {
+  printTestIntro("serialization.c", "message_to_buffer and buffer_to_message content_case=CT_NONE");
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_SIZE;
+  message->msg->content_case = CT_NONE;
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_KEY() {
+  printTestIntro("serialization.c", "message_to_buffer and buffer_to_message content_case=CT_KEY");
+
+  char* key = "key";
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GET;
+  message->msg->content_case = CT_KEY;
+  message->msg->key = string_to_msg(key);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_VALUE() {
+  printTestIntro("serialization.c",
+                 "message_to_buffer and buffer_to_message content_case=CT_VALUE");
+
+  char* data = strdup("1234567890abc");
+  struct data_t* value = data_create2(strlen(data) + 1, data);
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GET + 1;
+  message->msg->content_case = CT_VALUE;
+  message->msg->value = data_to_msg(value);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+  data_destroy(value);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_ENTRY() {
+  printTestIntro("serialization.c",
+                 "message_to_buffer and buffer_to_message content_case=CT_ENTRY");
+
+  char* key = strdup("myKey");
+  char* data = strdup("1234567890abc");
+  struct data_t* value = data_create2(strlen(data) + 1, data);
+  struct entry_t* entry = entry_create(key, value);
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GET + 1;
+  message->msg->content_case = CT_ENTRY;
+  message->msg->entry = entry_to_msg(entry);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+  entry_destroy(entry);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_KEYS() {
+  printTestIntro("serialization.c", "message_to_buffer and buffer_to_message content_case=CT_KEY");
+
+  char** keys = malloc(4 * sizeof(char*));
+  keys[0] = strdup("key0");
+  keys[1] = strdup("key1");
+  keys[2] = strdup("key2");
+  keys[3] = NULL;
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GETKEYS + 1;
+  message->msg->content_case = CT_KEYS;
+  message->msg->keys = keys_to_msg(keys);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+  tree_free_keys(keys);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_INT_RESULT() {
+  printTestIntro("serialization.c",
+                 "message_to_buffer and buffer_to_message content_case=CT_INT_RESULT");
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_SIZE + 1;
+  message->msg->content_case = CT_INT_RESULT;
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+
+  printTestDone();
+}
+
 // **************************************************************
 
 int main() {
@@ -799,6 +943,12 @@ int main() {
   test__entry_serialization__NULL_data();
   test__entry_serialization__NULL_key_and_NULL_value();
   test__tree_serialization();
+  test__message_serialization__CT_NONE();
+  test__message_serialization__CT_KEY();
+  test__message_serialization__CT_VALUE();
+  test__message_serialization__CT_ENTRY();
+  test__message_serialization__CT_KEYS();
+  test__message_serialization__CT_INT_RESULT();
 
   printf("\n\nDONE: No assertions failed!\n");
   return 0;

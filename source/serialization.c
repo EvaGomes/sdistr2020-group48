@@ -155,3 +155,41 @@ struct tree_t* buffer_to_tree(char* buffer, int buffer_size) {
   }
   return tree;
 }
+
+int message_to_buffer(struct message_t* message, char** message_buf) {
+  if (message == NULL || message_buf == NULL) {
+    return -1;
+  }
+
+  Message* msg = message->msg;
+  if (msg == NULL) {
+    return -1;
+  }
+
+  int buffer_size = message__get_packed_size(msg);
+  uint8_t* buffer = malloc(buffer_size);
+  if (buffer == NULL) {
+    fprintf(stderr, "\nERR: message_to_buffer: malloc failed\n");
+    return -1;
+  }
+  message__pack(msg, buffer);
+
+  *message_buf = (char*) buffer;
+  return buffer_size;
+}
+
+struct message_t* buffer_to_message(char* buffer, int buffer_size) {
+  if (buffer == NULL || buffer_size < 0) {
+    return NULL;
+  }
+
+  Message* msg = message__unpack(NULL, buffer_size, (uint8_t*) buffer);
+  struct message_t* message = malloc(sizeof(struct message_t*));
+  if (message == NULL) {
+    fprintf(stderr, "\nERR: buffer_to_message: malloc failed\n");
+    return NULL;
+  }
+  message->msg = msg;
+
+  return message;
+}

@@ -46,4 +46,7 @@ struct entry_t* msg_to_entry(EntryMessage* msg);
 KeysMessage* keys_to_msg(char** keys);
 char** msg_to_keys (KeysMessage* msg);
 
+struct message_t* message_create();
+void message_destroy(struct message_t* message);
+
 #endif

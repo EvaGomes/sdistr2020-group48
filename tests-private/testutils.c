@@ -74,6 +74,76 @@ void assertStrArrEquals(char** actual, char** expected) {
   }
 }
 
+void assertNullableStringEquals(NullableString* actual, NullableString* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assertStrEquals(actual->str, expected->str);
+  }
+}
+
+void assertDataMessageEquals(DataMessage* actual, DataMessage* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assert(actual->data.len == expected->data.len);
+    assertEquals(actual->data.data, expected->data.data, expected->data.len);
+  }
+}
+
+void assertEntryMessage(EntryMessage* actual, EntryMessage* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assertNullableStringEquals(actual->key, expected->key);
+    assertDataMessageEquals(actual->value, expected->value);
+  }
+}
+
+void assertKeysMessage(KeysMessage* actual, KeysMessage* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assert(actual->n_keys == expected->n_keys);
+    for (int i = 0; i < expected->n_keys; ++i) {
+      assertNullableStringEquals(actual->keys[i], expected->keys[i]);
+    }
+  }
+}
+
+void assertMessageEquals(Message* actual, Message* expected) {
+  if (expected == NULL) {
+    assert(actual == NULL);
+  } else {
+    assert(actual != NULL);
+    assert(actual->op_code == expected->op_code);
+    assert(actual->content_case == expected->content_case);
+    switch (expected->content_case) {
+      case CT_KEY:
+        assertNullableStringEquals(actual->key, expected->key);
+        break;
+      case CT_VALUE:
+        assertDataMessageEquals(actual->value, expected->value);
+        break;
+      case CT_ENTRY:
+        assertEntryMessage(actual->entry, expected->entry);
+        break;
+      case CT_KEYS:
+        assertKeysMessage(actual->keys, expected->keys);
+        break;
+      case CT_INT_RESULT:
+        assert(actual->int_result == expected->int_result);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 void assertNodeHasKey(struct tree_node_t* actualNode, char* expectedKey) {
   assert(actualNode != NULL);
   assertStrEquals(actualNode->entry->key, expectedKey);
