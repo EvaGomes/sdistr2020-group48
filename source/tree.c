@@ -117,13 +117,11 @@ int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
   return 0;
 }
 
-/* Returns the pointer to the node with the given key, or NULL if it is not in the given tree. */
-struct tree_node_t** _tree_node_pointer_get(struct tree_t* tree, char* key) {
-  if (tree == NULL || tree->root == NULL) {
-    return NULL;
-  }
-
-  struct tree_node_t** pointer_to_current_node = &(tree->root);
+/* Returns the pointer to the node with the given key, or NULL if it is not in the tree with the given root.
+ *  Expects the root to NOT be NULL.
+ */
+struct tree_node_t** _tree_node_pointer_get(struct tree_node_t** pointer_to_root, char* key) {
+  struct tree_node_t** pointer_to_current_node = pointer_to_root;
   struct tree_node_t* current_node = *pointer_to_current_node;
   while (current_node != NULL) {
     int comparison = key_compare(key, current_node->entry->key);
@@ -138,9 +136,15 @@ struct tree_node_t** _tree_node_pointer_get(struct tree_t* tree, char* key) {
 }
 
 struct data_t* tree_get(struct tree_t* tree, char* key) {
-  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(tree, key);
-  if (pointer_to_node == NULL) {
+  if (tree == NULL) {
     return NULL;
+  }
+  if (tree->root == NULL) {
+    return data_create(0);
+  }
+  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
+  if (pointer_to_node == NULL) {
+    return data_create(0);
   }
   struct data_t* value = (*pointer_to_node)->entry->value;
   return data_dup(value);
@@ -198,7 +202,10 @@ int _tree_compute_height(struct tree_node_t* node) {
 }
 
 int tree_del(struct tree_t* tree, char* key) {
-  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(tree, key);
+  if (tree == NULL || tree->root == NULL) {
+    return -1;
+  }
+  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
   if (pointer_to_node == NULL) {
     return -1;
   }

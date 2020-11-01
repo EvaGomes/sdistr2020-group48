@@ -138,14 +138,14 @@ int testDelInexistente() {
 	assert(tree_size(tree) == 1024);
 	result = (tree_size(tree) == 1024);
 
-	result = result && (tree_get(tree,"a/key/b-1024") == NULL) &&
-			   (tree_get(tree,"abc") == NULL);
+	// result = result && (tree_get(tree,"a/key/b-1024") == NULL) &&
+	// 		   (tree_get(tree,"abc") == NULL); // no longer what's expected in project2
 
 	result = result && (tree_del(tree,"a/key/b-1024") != 0) &&
 			   (tree_del(tree,"abc") != 0);
 
-	result = result && (tree_get(tree,"a/key/b-1024") == NULL) &&
-			   (tree_get(tree,"abc") == NULL);
+	// result = result && (tree_get(tree,"a/key/b-1024") == NULL) &&
+	// 		   (tree_get(tree,"abc") == NULL); // no longer what's expected in project2
 
 	assert(tree_size(tree) == 1024);
 	result = result && (tree_size(tree) == 1024);
@@ -186,8 +186,8 @@ int testDelExistente() {
 	result = result && (tree_del(tree,"a/key/b-1023") == 0) &&
 			   (tree_del(tree,"a/key/b-45") == 0);
 
-	result = result && (tree_get(tree,"a/key/b-1023") == NULL) &&
-			   (tree_get(tree,"a/key/b-45") == NULL);
+	// result = result && (tree_get(tree,"a/key/b-1023") == NULL) &&
+	// 		   (tree_get(tree,"a/key/b-45") == NULL); // no longer what's expected in project2
 
 	assert(tree_size(tree) == 1022);
 	result = result && (tree_size(tree) == 1022);

@@ -241,6 +241,38 @@ void test__tree_with_7_nodes() {
   printTestDone();
 }
 
+void test__tree_get__unexistent_key() {
+  printTestIntro("tree.c", "tree_get unexistent key");
+
+  struct tree_t* tree = _createTreeWith7Nodes();
+  struct data_t* result = tree_get(tree, "unexistent key");
+
+  assert(result != NULL);
+  assert(result->datasize == 0);
+  assert(result->data == NULL);
+
+  data_destroy(result);
+  tree_destroy(tree);
+  printTestDone();
+}
+
+void test__tree_del__existent_key() {
+  printTestIntro("tree.c", "tree_del existent key");
+
+  struct tree_t* tree = _createTreeWith7Nodes();
+  int result = tree_del(tree, "key3");
+
+  assert(result == 0);
+  assert(tree->size == 6);
+  struct data_t* resultAfterDeletion = tree_get(tree, "key3");
+  assert(resultAfterDeletion->datasize == 0);
+  assert(resultAfterDeletion->data == NULL);
+
+  data_destroy(resultAfterDeletion);
+  tree_destroy(tree);
+  printTestDone();
+}
+
 // **************************************************************
 // serialization.c
 // **************************************************************
@@ -300,6 +332,8 @@ int main() {
   test__entry_compare__NULL_keys();
 
   test__tree_with_7_nodes();
+  test__tree_get__unexistent_key();
+  test__tree_del__existent_key();
 
   test__tree_serialization();
 
