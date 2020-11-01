@@ -314,9 +314,6 @@ void test__tree_serialization() {
 // **************************************************************
 
 int main() {
-  printf("-------------------------\n");
-  printf("test_all-private\n");
-  printf("-------------------------\n");
 
   test__data_create__datasize_0();
   test__data_create2__datasize_0__data_NULL();
@@ -338,6 +335,5 @@ int main() {
   test__tree_serialization();
 
   printf("\n\nDONE: No assertions failed!\n");
-  printf("-------------------------\n");
   return 0;
 }
