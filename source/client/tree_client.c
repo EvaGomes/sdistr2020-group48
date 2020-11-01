@@ -9,6 +9,17 @@
 #include "network_client.h"
 
 #include <errno.h>
+#include <signal.h>
+
+int ignore_SIGPIPE_signals() {
+  struct sigaction s;
+  s.sa_handler = SIG_IGN;
+  if (sigaction(SIGPIPE, &s, NULL) != 0) {
+    fprintf(stderr, "Failed to ignore SIGPIPE signals\n");
+    return -1;
+  }
+  return 0;
+}
 
 char* collect_input() {
 
@@ -27,6 +38,8 @@ char* collect_input() {
 }
 
 int main(int argc, char** argv) {
+
+  ignore_SIGPIPE_signals();
 
   if (argc != 2) {
     errno = EINVAL;
