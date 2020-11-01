@@ -2,7 +2,7 @@
 #define _TREE_SKEL_H
 
 #include "message-private.h" // ADDED!
-#include "sdmessage.pb-c.h"
+// #include "sdmessage.pb-c.h" // REMOVED!
 #include "tree.h"
 
 /* Inicia o skeleton da árvore.

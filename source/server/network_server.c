@@ -5,6 +5,8 @@
  */
 
 #include "inet-private.h"
+#include "message-private.h"
+#include "serialization-private.h"
 #include "tree_skel.h"
 
 int network_server_init(short port) {
@@ -47,35 +49,53 @@ int network_server_init(short port) {
   return listening_socket;
 }
 
+struct message_t* network_receive(int client_socket) {
+  void* buffer;
+  int buffer_size = read(client_socket, buffer, MAX_MSG);
+
+  if (buffer_size < 0) {
+    fprintf(stderr, "connsockfd=%d - Error while reading request-data from client\n",
+            client_socket);
+    return NULL;
+  }
+
+  struct message_t* message = buffer_to_message(buffer, buffer_size);
+  free(buffer);
+  return message;
+}
+
+int network_send(int client_socket, struct message_t* msg) {
+  void* buffer;
+  int buffer_size = message_to_buffer(msg, buffer);
+  message_destroy(msg);
+
+  int written_size = write(client_socket, buffer, buffer_size);
+  free(buffer);
+
+  if (written_size != buffer_size) {
+    fprintf(stderr, "connsockfd=%d - Error while sending response-data to the client\n",
+            client_socket);
+    return -1;
+  }
+  return 0;
+}
+
 int _client_connection_loop(int connsockfd) {
   char str[MAX_MSG + 1];
   int nbytes, count;
 
   while (1) {
 
-    // Lê string (no máximo MAX_MSG bytes) enviada pelo cliente
-    // através da socket
-    if ((nbytes = read(connsockfd, str, MAX_MSG)) < 0) {
-      fprintf(stderr, "connsockfd=%d - Error while reading request-data from client\n", connsockfd);
+    struct message_t* message = network_receive(connsockfd);
+    if (message == NULL) {
       return -1;
     }
 
-    // Coloca terminador de string
-    str[nbytes] = '\0';
-    printf("connsockfd=%d - Received request-data from client\n    %s\n", connsockfd, str);
-    // Conta número de carateres
-    count = strlen(str);
-    // Converte count para formato de rede
-    count = htonl(count);
-
-    // Envia tamanho da string ao cliente através da socket
-    if ((nbytes = write(connsockfd, &count, sizeof(count))) != sizeof(count)) {
-      fprintf(stderr, "connsockfd=%d - Error while sending response-data to the client\n",
-              connsockfd);
+    if (network_send(connsockfd, message) < 0) {
       return -1;
     }
 
-    printf("connsockfd=%d - Sent response-data to client\n    %d\n", connsockfd, count);
+    printf("connsockfd=%d - Sent response-data to client\n", connsockfd);
   }
 }
 
@@ -95,14 +115,6 @@ int network_main_loop(int listening_socket) {
     close(connsockfd);
     printf("connsockfd=%d - Closed client connection\n", connsockfd);
   }
-  return 0; // TODO
-}
-
-struct message_t* network_receive(int client_socket) {
-  return 0; // TODO
-}
-
-int network_send(int client_socket, struct message_t* msg) {
   return 0; // TODO
 }
 
