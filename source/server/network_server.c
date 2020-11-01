@@ -15,6 +15,11 @@ int network_server_init(short port) {
     return -1;
   }
 
+  int enable = 1;
+  if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+    perror("Failed to allow reuse of local addresses");
+  }
+
   struct sockaddr_in server;
   server.sin_family = AF_INET;
   server.sin_port = port;
