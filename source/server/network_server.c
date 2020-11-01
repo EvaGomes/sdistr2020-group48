@@ -4,7 +4,7 @@
  *   João Vieira (45677)
  */
 
-#include "inet.h"
+#include "inet-private.h"
 #include "tree_skel.h"
 
 int network_server_init(short port) {
@@ -53,24 +53,24 @@ int network_main_loop(int listening_socket) {
   struct sockaddr_in client;
   char str[MAX_MSG + 1];
   int nbytes, count;
-  socklen_t size_client;
+  socklen_t size_client = 0;
 
   // accept bloqueia à espera de pedidos de conexão.
   // Quando retorna já foi feito o "three-way handshake" e connsockfd é uma
   // socket pronta a comunicar com o cliente.
   while ((connsockfd = accept(listening_socket, (struct sockaddr*) &client, &size_client)) != -1) {
 
-    printf("Accepted client connection; connsockfd=%d", connsockfd);
+    printf("connsockfd=%d - Accepted client connection\n", connsockfd);
 
     // Lê string (no máximo MAX_MSG bytes) enviada pelo cliente
     // através da socket
     if ((nbytes = read(connsockfd, str, MAX_MSG)) < 0) {
-      perror("Error while reading request-data from client");
+      fprintf(stderr, "connsockfd=%d - Error while reading request-data from client\n", connsockfd);
       close(connsockfd);
       continue;
     }
 
-    printf("Got data from client");
+    printf("connsockfd=%d - Received request-data from client\n", connsockfd);
 
     // Coloca terminador de string
     str[nbytes] = '\0';
@@ -81,12 +81,13 @@ int network_main_loop(int listening_socket) {
 
     // Envia tamanho da string ao cliente através da socket
     if ((nbytes = write(connsockfd, &count, sizeof(count))) != sizeof(count)) {
-      perror("Error while sending response-data to the client");
+      fprintf(stderr, "connsockfd=%d - Error while sending response-data to the client\n",
+              connsockfd);
       close(connsockfd);
       continue;
     }
 
-    // Fecha socket referente a esta conexão
+    printf("connsockfd=%d - Sent response-data to client\n", connsockfd);
     close(connsockfd);
   }
   return 0; // TODO

@@ -6,7 +6,7 @@
 
 #include "client_stub-private.h"
 #include "client_stub.h"
-#include "inet.h"
+#include "inet-private.h"
 #include "sdmessage.pb-c.h"
 
 /* Esta função deve:
@@ -20,7 +20,7 @@
 int network_connect(struct rtree_t* rtree) {
 
   if ((rtree->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    perror("Error creating TCP socket");
+    perror("Error creating TCP socket\n");
     return -1;
   }
 
@@ -33,13 +33,13 @@ int network_connect(struct rtree_t* rtree) {
   server.sin_port = htons(server_port);
 
   if (inet_pton(AF_INET, server_ip_address, &server.sin_addr) < 1) {
-    fprintf(stderr, "Error converting server's IP address \"%s\"", server_ip_address);
+    fprintf(stderr, "Error converting server's IP address \"%s\"\n", server_ip_address);
     close(sockfd);
     return -1;
   }
 
   if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
-    fprintf(stderr, "Error connecting to server at %s:%d", server_ip_address, server_port);
+    fprintf(stderr, "Error connecting to server at %s:%d\n", server_ip_address, server_port);
     close(sockfd);
     return -1;
   }

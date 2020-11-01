@@ -42,7 +42,7 @@ $(EXECS_DIR)/tree_client: $(LIBS_DIR)/client-lib.o \
 $(EXECS_DIR)/tree_server: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
                           $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/serialization.o \
                           $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
-                          $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
+                          $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
 						  $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_server.o
 $(EXECS): $:
 	$(CC) $^ $(LINK_CFLAGS) -o $@
@@ -50,7 +50,7 @@ $(EXECS): $:
 
 # link libs
 $(LIBS_DIR)/client-lib.o: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/sdmessage.pb-c.o \
-                          $(OBJS_DIR)/$(CLIENT_SUBDIR)/network_client.o \
+                          $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(CLIENT_SUBDIR)/network_client.o \
                           $(OBJS_DIR)/$(CLIENT_SUBDIR)/client_stub.o
 	ld -r $^ -o $@
 

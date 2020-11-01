@@ -15,6 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+const int SIZE_OF_RTREE = sizeof(struct rtree_t);
+
 void* _on_invalid_arg(const char* address_port) {
     errno = EINVAL;
     fprintf(stderr, "Invalid argument \"%s\"", address_port);
@@ -27,24 +29,28 @@ struct rtree_t* rtree_connect(const char* address_port) {
   }
   
   // remove const to prevent -Wdiscarded-qualifiers in strtok
-  char* address_and_port = strdup(address_port);
+  char address_and_port[strlen(address_port)];
+  strcpy(address_and_port, address_port);
 
   char* delimiter = ":";
-  char* ip_adress = strdup(strtok(address_and_port, delimiter));
-  char* port = strdup(strtok(NULL, delimiter));
-  free(address_and_port);
+  char* ip_adress = strtok(address_and_port, delimiter);
+  char* port_str = strtok(NULL, delimiter);
 
-  if (port == NULL) {
+  if (port_str == NULL) {
+    return _on_invalid_arg(address_port);
+  }
+  int port = atoi(port_str);
+  if (port == 0) {
     return _on_invalid_arg(address_port);
   }
 
-  struct rtree_t* rtree = malloc(sizeof(struct rtree_t));
-  rtree->server_ip_address = ip_adress;
-  rtree->server_port = atoi(port);
-
-  if (rtree->server_port == 0) {
-    return _on_invalid_arg(address_port);
+  struct rtree_t* rtree = malloc(SIZE_OF_RTREE);
+  if (rtree == NULL) {
+    fprintf(stderr, "nERR: rtree_connect: malloc failed");
+    return NULL;
   }
+  rtree->server_ip_address = strdup(ip_adress);
+  rtree->server_port = port;
 
   if (network_connect(rtree) < 0) {
     free(rtree);
@@ -58,6 +64,7 @@ int rtree_disconnect(struct rtree_t* rtree) {
   if (network_close(rtree) < 0) {
     return -1;
   }
+  free(rtree->server_ip_address);
   free(rtree);
   return 0;
 }

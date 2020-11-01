@@ -10,3 +10,5 @@
 //tamanho máximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048 
 
+int ignore_SIGPIPE_signals();
+

@@ -5,21 +5,11 @@
  */
 
 #include "client_stub-private.h"
-#include "inet.h"
+#include "inet-private.h"
 #include "network_client.h"
 
 #include <errno.h>
 #include <signal.h>
-
-int ignore_SIGPIPE_signals() {
-  struct sigaction s;
-  s.sa_handler = SIG_IGN;
-  if (sigaction(SIGPIPE, &s, NULL) != 0) {
-    fprintf(stderr, "Failed to ignore SIGPIPE signals\n");
-    return -1;
-  }
-  return 0;
-}
 
 char* collect_input() {
 
@@ -60,15 +50,17 @@ int main(int argc, char** argv) {
 
     char* input_str = collect_input();
     int input_str_len = strlen(input_str);
-    
+
     if (strcmp(input_str, "quit") == 0) {
+      free(input_str);
       break;
     }
 
     int nbytes;
 
     if ((nbytes = write(sockfd, input_str, input_str_len)) != input_str_len) {
-      fprintf(stderr, "Error while sending request-data to server\n  data=%s\n", input_str);
+      fprintf(stderr, "Error while sending request-data to server: %s\n  %s\n", strerror(errno),
+              input_str);
       free(input_str);
       continue;
     }
@@ -85,5 +77,6 @@ int main(int argc, char** argv) {
     printf("< Server response: len= %d \n", ntohl(count));
   }
 
+  printf("Quitting...");
   return rtree_disconnect(rtree);
 }
