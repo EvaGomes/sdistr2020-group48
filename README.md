@@ -1,4 +1,4 @@
-# sdistr2020-group48-proj1
+# sdistr2020-group48-proj2
 
 
 ## Known limitations:
