@@ -7,6 +7,7 @@
 #include "client_stub-private.h"
 #include "data.h"
 #include "entry.h"
+#include "message-private.h"
 #include "network_client.h"
 
 #include <errno.h>
@@ -18,16 +19,16 @@
 const int SIZE_OF_RTREE = sizeof(struct rtree_t);
 
 void* _on_invalid_arg(const char* address_port) {
-    errno = EINVAL;
-    fprintf(stderr, "Invalid argument \"%s\"", address_port);
-    return NULL;
+  errno = EINVAL;
+  fprintf(stderr, "Invalid argument \"%s\"", address_port);
+  return NULL;
 }
 
 struct rtree_t* rtree_connect(const char* address_port) {
   if (address_port == NULL) {
     return _on_invalid_arg(address_port);
   }
-  
+
   // remove const to prevent -Wdiscarded-qualifiers in strtok
   char address_and_port[strlen(address_port)];
   strcpy(address_and_port, address_port);
@@ -70,27 +71,138 @@ int rtree_disconnect(struct rtree_t* rtree) {
 }
 
 int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return -1;
+  }
+  request->msg->op_code = OP_PUT;
+  request->msg->content_case = CT_ENTRY;
+  request->msg->entry = entry_to_msg(entry);
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL || response->msg->op_code == OP_ERROR) {
+    return -1;
+  }
+  message_destroy(response);
+  return 0;
 }
 
 struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return NULL;
+  }
+  request->msg->op_code = OP_GET;
+  request->msg->content_case = CT_KEY;
+  request->msg->key = string_to_msg(key);
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL) {
+    return NULL;
+  }
+  if (response->msg->op_code == OP_ERROR || response->msg->content_case != CT_VALUE) {
+    message_destroy(response);
+    return NULL;
+  }
+  struct data_t* ret = msg_to_data(response->msg->value);
+  message_destroy(response);
+  return ret;
 }
 
 int rtree_del(struct rtree_t* rtree, char* key) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return -1;
+  }
+  request->msg->op_code = OP_DEL;
+  request->msg->content_case = CT_KEY;
+  request->msg->key = string_to_msg(key);
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL) {
+    return -1;
+  }
+  if (response == NULL || response->msg->op_code == OP_ERROR) {
+    message_destroy(response);
+    return -1;
+  }
+  message_destroy(response);
+  return 0;
 }
 
 int rtree_size(struct rtree_t* rtree) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return -1;
+  }
+  request->msg->op_code = OP_SIZE;
+  request->msg->content_case = CT_NONE;
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL) {
+    return -1;
+  }
+  if (response->msg->op_code == OP_ERROR || response->msg->content_case != CT_INT_RESULT) {
+    message_destroy(response);
+    return -1;
+  }
+  int ret = response->msg->int_result;
+  message_destroy(response);
+  return ret;
 }
 
 int rtree_height(struct rtree_t* rtree) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return -1;
+  }
+  request->msg->op_code = OP_HEIGHT;
+  request->msg->content_case = CT_NONE;
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL) {
+    return -1;
+  }
+  if (response->msg->op_code == OP_ERROR || response->msg->content_case != CT_INT_RESULT) {
+    message_destroy(response);
+    return -1;
+  }
+  int ret = response->msg->int_result;
+  message_destroy(response);
+  return ret;
 }
 
 char** rtree_get_keys(struct rtree_t* rtree) {
-  return 0; // TODO
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return NULL;
+  }
+  request->msg->op_code = OP_GETKEYS;
+  request->msg->content_case = CT_NONE;
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL) {
+    return NULL;
+  }
+  if (response->msg->op_code == OP_ERROR || response->msg->content_case != CT_KEYS) {
+    message_destroy(response);
+    return NULL;
+  }
+  char** ret = msg_to_keys(response->msg->keys);
+  message_destroy(response);
+  return ret;
 }
 
 void rtree_free_keys(char** keys) {

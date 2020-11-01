@@ -49,8 +49,9 @@ $(EXECS): $:
 	chmod 777 $@
 
 # link libs
-$(LIBS_DIR)/client-lib.o: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/sdmessage.pb-c.o \
-                          $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(CLIENT_SUBDIR)/network_client.o \
+$(LIBS_DIR)/client-lib.o: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+                          $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
+						  $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(CLIENT_SUBDIR)/network_client.o \
                           $(OBJS_DIR)/$(CLIENT_SUBDIR)/client_stub.o
 	ld -r $^ -o $@
 

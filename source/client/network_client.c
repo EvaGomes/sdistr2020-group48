@@ -8,6 +8,7 @@
 #include "client_stub.h"
 #include "inet-private.h"
 #include "sdmessage.pb-c.h"
+#include "serialization-private.h"
 
 /* Esta função deve:
  * - Obter o endereço do servidor (struct sockaddr_in) a base da
@@ -49,7 +50,30 @@ int network_connect(struct rtree_t* rtree) {
 }
 
 struct message_t* network_send_receive(struct rtree_t* rtree, struct message_t* msg) {
-  return 0; // TODO
+  int sockfd = rtree->sockfd;
+
+  void* buffer;
+  int buffer_size;
+  
+  buffer_size = message_to_buffer(msg, buffer);
+  int written_size = write(sockfd, buffer, buffer_size);
+  message_destroy(msg);
+  free(buffer);
+
+  if (written_size != buffer_size) {
+    fprintf(stderr, "connsockfd=%d - Error while sending request-data to server\n", sockfd);
+    return NULL;
+  }
+
+  buffer_size = read(sockfd, buffer, MAX_MSG);
+  if (buffer_size < 0) {
+    fprintf(stderr, "connsockfd=%d - Error while reading response-data from server\n", sockfd);
+    return NULL;
+  }
+
+  struct message_t* message = buffer_to_message(buffer, buffer_size);
+  free(buffer);
+  return message;
 }
 
 int network_close(struct rtree_t* rtree) {
