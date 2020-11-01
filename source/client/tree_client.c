@@ -47,6 +47,10 @@ int main(int argc, char** argv) {
 
     char* input_str = collect_input();
     int input_str_len = strlen(input_str);
+    
+    if (strcmp(input_str, "quit") == 0) {
+      break;
+    }
 
     int nbytes;
 
