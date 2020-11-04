@@ -56,25 +56,40 @@ int main(int argc, char** argv) {
       break;
     }
 
-    int nbytes;
+    char* command = input_str; // TODO: parse input string
+    char *key, data;
 
-    if ((nbytes = write(sockfd, input_str, input_str_len)) != input_str_len) {
-      fprintf(stderr, "Error while sending request-data to server: %s\n  %s\n", strerror(errno),
-              input_str);
-      free(input_str);
-      continue;
+    if (strcmp(command, "put") == 0) {
+      printf("// TODO parse input_str and get 'key' and 'data'\n");
+    } else if (strcmp(command, "get") == 0) {
+      printf("// TODO parse input_str and get 'key'\n");
+      // char* value = rtree_get(rtree, key);
+      // if (value == NULL) {
+      //   printf("Failed!");
+      // } else {
+      //   printf("value: %s", value);
+      // }
+    } else if (strcmp(command, "del") == 0) {
+      printf("// TODO parse input_str and get 'key'\n");
+      // if (rtree_del(rtree, key) < 0) {
+      //   printf("Failed!");
+      // } else {
+      //   printf("Done!");
+      // }
+    } else if (strcmp(input_str, "size") == 0) {
+      printf("size: %d\n", rtree_size(rtree));
+    } else if (strcmp(input_str, "height") == 0) {
+      printf("height: %d\n", rtree_height(rtree));
+    } else if (strcmp(input_str, "getkeys") == 0) {
+      char** keys = rtree_get_keys(rtree);
+      if (keys == NULL) {
+        printf("Failed!\n");
+      } else {
+        printf("keys: // TODO print keys\n");
+      }
+    } else {
+      printf("unknown command!\n");
     }
-
-    free(input_str);
-    printf("Waiting for a server response...\n");
-
-    int count;
-    if ((nbytes = read(sockfd, &count, sizeof(count))) != sizeof(count)) {
-      fprintf(stderr, "Error while reading response-data from the server\n");
-      continue;
-    };
-
-    printf("< Server response: len= %d \n", ntohl(count));
   }
 
   printf("Quitting...");
