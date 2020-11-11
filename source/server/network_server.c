@@ -68,7 +68,10 @@ int _client_connection_loop(int connsockfd) {
     if (message == NULL) {
       return -1;
     }
-
+    if (invoke(message) < 0) {
+      message_destroy(message);
+      return -1;
+    }
     int send_result = network_send(connsockfd, message);
     message_destroy(message);
     if (send_result < 0) {

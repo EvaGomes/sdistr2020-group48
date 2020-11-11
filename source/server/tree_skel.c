@@ -7,7 +7,9 @@
 #include "message-private.h"
 #include "sdmessage.pb-c.h"
 #include "tree.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 
 struct tree_t* tree;
 
@@ -115,7 +117,12 @@ int invoke(struct message_t* message) {
 
   Message* request = message->msg;
 
-  Message* response;
+  Message* response = malloc(SIZE_OF_MESSAGE);
+  if (response == NULL) {
+    fprintf(stderr, "\nERR: tree_skel#invoke: malloc failed\n");
+    return -1;
+  }
+
   message__init(response);
   response->op_code = OP_BAD;
   message->msg = response;
@@ -124,15 +131,13 @@ int invoke(struct message_t* message) {
 
   message__free_unpacked(request, NULL);
 
-  if (response->op_code != OP_BAD) {
-    // correctly field by one of the operations
-    return 0;
-  } else {
+  if (response->op_code == OP_BAD) {
+    // none of the operations filled the response correctly
     response->op_code = OP_ERROR;
     response->content_case = CT_INT_RESULT;
     response->int_result = -1;
-    fprintf(stderr, "\nERR: tree_skel#invoke: unknown msg: op_code=%d, content_case=%d\n",
+    fprintf(stderr, "\nERR: tree_skel#invoke: couldnt handle op_code=%d, content_case=%d\n",
             request->op_code, request->content_case);
-    return -1;
   }
+  return 0;
 }
