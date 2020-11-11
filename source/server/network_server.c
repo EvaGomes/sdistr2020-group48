@@ -6,8 +6,12 @@
 
 #include "inet-private.h"
 #include "message-private.h"
-#include "serialization-private.h"
 #include "tree_skel.h"
+
+#include <netinet/in.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 int network_server_init(short port) {
   int listening_socket;
@@ -50,40 +54,14 @@ int network_server_init(short port) {
 }
 
 struct message_t* network_receive(int client_socket) {
-  void* buffer;
-  int buffer_size = read(client_socket, buffer, MAX_MSG);
-
-  if (buffer_size < 0) {
-    fprintf(stderr, "connsockfd=%d - Error while reading request-data from client\n",
-            client_socket);
-    return NULL;
-  }
-
-  struct message_t* message = buffer_to_message(buffer, buffer_size);
-  free(buffer);
-  return message;
+  return network_receive_message(client_socket);
 }
 
 int network_send(int client_socket, struct message_t* msg) {
-  void* buffer;
-  int buffer_size = message_to_buffer(msg, buffer);
-  message_destroy(msg);
-
-  int written_size = write(client_socket, buffer, buffer_size);
-  free(buffer);
-
-  if (written_size != buffer_size) {
-    fprintf(stderr, "connsockfd=%d - Error while sending response-data to the client\n",
-            client_socket);
-    return -1;
-  }
-  return 0;
+  return network_send_message(client_socket, msg);
 }
 
 int _client_connection_loop(int connsockfd) {
-  char str[MAX_MSG + 1];
-  int nbytes, count;
-
   while (1) {
 
     struct message_t* message = network_receive(connsockfd);
@@ -91,11 +69,11 @@ int _client_connection_loop(int connsockfd) {
       return -1;
     }
 
-    if (network_send(connsockfd, message) < 0) {
+    int send_result = network_send(connsockfd, message);
+    message_destroy(message);
+    if (send_result < 0) {
       return -1;
     }
-
-    printf("connsockfd=%d - Sent response-data to client\n", connsockfd);
   }
 }
 
@@ -105,17 +83,13 @@ int network_main_loop(int listening_socket) {
   struct sockaddr_in client;
   socklen_t size_client = 0;
 
-  // accept bloqueia à espera de pedidos de conexão.
-  // Quando retorna já foi feito o "three-way handshake" e connsockfd é uma
-  // socket pronta a comunicar com o cliente.
   while ((connsockfd = accept(listening_socket, (struct sockaddr*) &client, &size_client)) != -1) {
-
-    printf("connsockfd=%d - Accepted client connection\n", connsockfd);
+    printf("sockfd=%d - Accepted client connection\n", connsockfd);
     _client_connection_loop(connsockfd);
     close(connsockfd);
-    printf("connsockfd=%d - Closed client connection\n", connsockfd);
+    printf("sockfd=%d - Closed client connection\n", connsockfd);
   }
-  return 0; // TODO
+  return 0;
 }
 
 int network_server_close() {

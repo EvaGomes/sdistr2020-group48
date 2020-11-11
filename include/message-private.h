@@ -34,6 +34,14 @@ struct message_t {
 #define CT_KEYS MESSAGE__CONTENT_KEYS
 #define CT_INT_RESULT MESSAGE__CONTENT_INT_RESULT
 
+/* sizes */
+#define SIZE_OF_DATA_MESSAGE sizeof(DataMessage)
+#define SIZE_OF_NULLABLE_STRING sizeof(NullableString)
+#define SIZE_OF_ENTRY_MESSAGE sizeof(EntryMessage)
+#define SIZE_OF_KEYS_MESSAGE sizeof(KeysMessage)
+#define SIZE_OF_MESSAGE sizeof(Message)
+#define SIZE_OF_MESSAGE_T sizeof(struct message_t)
+
 DataMessage* data_to_msg(struct data_t* data);
 struct data_t* msg_to_data(DataMessage* sg);
 

@@ -8,7 +8,11 @@
 #include "network_server.h"
 #include "tree_skel.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int main(int argc, char** argv) {
 

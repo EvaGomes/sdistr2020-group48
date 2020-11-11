@@ -8,13 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_DATA_MESSAGE = sizeof(DataMessage);
-const int SIZE_OF_ENTRY_MESSAGE = sizeof(EntryMessage);
-const int SIZE_OF_KEYS_MESSAGE = sizeof(KeysMessage);
-const int SIZE_OF_MESSAGE = sizeof(Message);
-const int SIZE_OF_MESSAGE_T = sizeof(struct message_t);
-const int SIZE_OF_NULLABLE_STRING = sizeof(NullableString);
-
 DataMessage* data_to_msg(struct data_t* dataStruct) {
   if (dataStruct == NULL) {
     return NULL;
