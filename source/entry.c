@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_ENTRY_T = sizeof(struct entry_t);
+#define SIZE_OF_ENTRY_T sizeof(struct entry_t)
 
 struct entry_t* entry_create(char* key, struct data_t* data) {
   struct entry_t* entry = malloc(SIZE_OF_ENTRY_T);

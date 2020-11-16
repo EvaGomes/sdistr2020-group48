@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_INT = sizeof(int);
+#define SIZE_OF_INT sizeof(int)
 
 int data_to_buffer(struct data_t* dataStruct, char** data_buf) {
   if (dataStruct == NULL || data_buf == NULL) {

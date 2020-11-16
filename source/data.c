@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_DATA_T = sizeof(struct data_t);
+#define SIZE_OF_DATA_T sizeof(struct data_t)
 
 struct data_t* data_create(int size) {
   if (size < 0) {

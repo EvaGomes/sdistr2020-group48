@@ -13,10 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_TREE_T = sizeof(struct tree_t);
-const int SIZE_OF_TREE_NODE_T = sizeof(struct tree_node_t);
-const int SIZE_OF_CHAR_POINTER = sizeof(char*);
-const int SIZE_OF_NULL = sizeof(NULL);
+#define SIZE_OF_TREE_T sizeof(struct tree_t)
+#define SIZE_OF_TREE_NODE_T sizeof(struct tree_node_t)
+#define SIZE_OF_CHAR_POINTER sizeof(char*)
+#define SIZE_OF_NULL sizeof(NULL)
 
 struct tree_t* tree_create() {
   struct tree_t* tree = malloc(SIZE_OF_TREE_T);

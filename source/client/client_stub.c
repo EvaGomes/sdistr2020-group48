@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int SIZE_OF_RTREE = sizeof(struct rtree_t);
+#define SIZE_OF_RTREE sizeof(struct rtree_t)
 
 void _rtree_destroy(struct rtree_t* rtree) {
   if (rtree != NULL) {

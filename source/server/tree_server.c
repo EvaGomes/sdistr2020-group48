@@ -6,7 +6,6 @@
 
 #include "inet-private.h"
 #include "network_server.h"
-#include "tree_skel.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
