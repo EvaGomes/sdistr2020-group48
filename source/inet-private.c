@@ -63,11 +63,12 @@ int network_send_message(int sockfd, struct message_t* message) {
          message->msg->op_code, message->msg->content_case);
 
   int written_size = write(sockfd, (void*) buffer, buffer_size);
+  free(buffer);
+
   if (written_size != buffer_size) {
     fprintf(stderr, "sockfd=%d - Error while sending message\n", sockfd);
     return -1;
   }
   printf("sockfd=%d - Sent data\n", sockfd);
-
   return 0;
 }

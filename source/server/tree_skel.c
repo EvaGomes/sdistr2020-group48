@@ -41,6 +41,7 @@ void _invoke_tree_del(Message* request, Message* response) {
   int del_result = tree_del(tree, key);
   response->op_code = (del_result == 0) ? (request->op_code + 1) : OP_ERROR;
   response->content_case = CT_NONE;
+  free(key);
 }
 
 void _invoke_tree_get(Message* request, Message* response) {
@@ -50,6 +51,8 @@ void _invoke_tree_get(Message* request, Message* response) {
     response->op_code = request->op_code + 1;
     response->content_case = CT_VALUE;
     response->value = data_to_msg(value);
+    data_destroy(value);
+    free(key);
   } else {
     response->op_code = OP_ERROR;
     response->content_case = CT_NONE;
@@ -68,6 +71,7 @@ void _invoke_tree_get_keys(Message* request, Message* response) {
     response->op_code = request->op_code + 1;
     response->content_case = CT_KEYS;
     response->keys = keys_to_msg(keys);
+    tree_free_keys(keys);
   } else {
     response->op_code = OP_ERROR;
     response->content_case = CT_NONE;
@@ -95,9 +99,10 @@ void _invoke(Message* request, Message* response) {
   else if (request->op_code == OP_PUT && request->content_case == CT_ENTRY) {
     struct entry_t* entry = msg_to_entry(request->entry);
     if (entry == NULL) {
-      fprintf(stderr, "\nERR: tree_skel#invoke: could not convert EntryMessage to entry_t\n");
+      fprintf(stderr, "ERR: tree_skel#_invoke: could not convert EntryMessage to entry_t\n");
     } else {
       _invoke_tree_put(request, entry, response);
+      entry_destroy(entry);
     }
   }
 
@@ -128,9 +133,6 @@ int invoke(struct message_t* message) {
   message->msg = response;
 
   _invoke(request, response);
-
-  message__free_unpacked(request, NULL);
-
   if (response->op_code == OP_BAD) {
     // none of the operations filled the response correctly
     response->op_code = OP_ERROR;
@@ -139,5 +141,7 @@ int invoke(struct message_t* message) {
     fprintf(stderr, "\nERR: tree_skel#invoke: couldnt handle op_code=%d, content_case=%d\n",
             request->op_code, request->content_case);
   }
+
+  message__free_unpacked(request, NULL);
   return 0;
 }

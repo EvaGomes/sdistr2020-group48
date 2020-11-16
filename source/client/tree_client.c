@@ -7,6 +7,7 @@
 #include "client_stub-private.h"
 #include "inet-private.h"
 #include "network_client.h"
+#include "tree.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -17,11 +18,15 @@
 char* _collect_input() {
 
   char* input_str = malloc(MAX_MSG * sizeof(char));
+  if (input_str == NULL) {
+    fprintf(stderr, "ERR: _collect_input: malloc failed\n");
+    return NULL;
+  }
   printf("> ");
   fgets(input_str, MAX_MSG, stdin);
 
   // prune: free over occupied space and drop \n at the end
-  int input_str_len = strlen(input_str);
+  size_t input_str_len = strlen(input_str);
   char last_char = input_str[input_str_len - 1];
   int str_len = (last_char == '\n') ? (input_str_len - 1) : input_str_len;
   char* str = strndup(input_str, str_len);
@@ -88,6 +93,7 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
         data_destroy(value);
       } else {
         printf("< value: %s\n", (char*) value->data);
+        data_destroy(value);
       }
     }
   }
@@ -98,8 +104,10 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
       printf("< Invalid args. Usage: put <key> <data>\n");
     } else if (rtree_put(rtree, entry) < 0) {
       printf("< Operation failed!\n");
+      entry_destroy(entry);
     } else {
       printf("< Done!\n");
+      entry_destroy(entry);
     }
   }
 
@@ -109,6 +117,7 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
       printf("< Query failed!\n");
     } else {
       _print_keys(keys);
+      tree_free_keys(keys);
     }
   }
 

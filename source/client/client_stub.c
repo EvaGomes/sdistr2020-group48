@@ -18,15 +18,17 @@
 
 const int SIZE_OF_RTREE = sizeof(struct rtree_t);
 
-void* _on_invalid_arg(const char* address_port) {
-  errno = EINVAL;
-  fprintf(stderr, "Invalid argument \"%s\"", address_port);
-  return NULL;
+void _rtree_destroy(struct rtree_t* rtree) {
+  if (rtree != NULL) {
+    free(rtree->server_ip_address);
+    free(rtree);
+  }
 }
 
 struct rtree_t* rtree_connect(const char* address_port) {
   if (address_port == NULL) {
-    return _on_invalid_arg(address_port);
+    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    return NULL;
   }
 
   // remove const to prevent -Wdiscarded-qualifiers in strtok
@@ -38,23 +40,25 @@ struct rtree_t* rtree_connect(const char* address_port) {
   char* port_str = strtok(NULL, delimiter);
 
   if (port_str == NULL) {
-    return _on_invalid_arg(address_port);
+    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    return NULL;
   }
   int port = atoi(port_str);
   if (port == 0) {
-    return _on_invalid_arg(address_port);
+    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    return NULL;
   }
 
   struct rtree_t* rtree = malloc(SIZE_OF_RTREE);
   if (rtree == NULL) {
-    fprintf(stderr, "nERR: rtree_connect: malloc failed");
+    fprintf(stderr, "\nERR: rtree_connect: malloc failed\n");
     return NULL;
   }
   rtree->server_ip_address = strdup(ip_adress);
   rtree->server_port = port;
 
   if (network_connect(rtree) < 0) {
-    free(rtree);
+    _rtree_destroy(rtree);
     return NULL;
   }
 
@@ -62,15 +66,17 @@ struct rtree_t* rtree_connect(const char* address_port) {
 }
 
 int rtree_disconnect(struct rtree_t* rtree) {
-  if (network_close(rtree) < 0) {
-    return -1;
-  }
-  free(rtree->server_ip_address);
-  free(rtree);
-  return 0;
+  int close_result = network_close(rtree);
+  _rtree_destroy(rtree);
+  return (close_result < 0) ? -1 : 0;
 }
 
 int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
+  if (entry == NULL) {
+    fprintf(stderr, "\nERR: rtree_put: invalid arg entry\n");
+    return -1;
+  }
+
   struct message_t* request = message_create();
   if (request == NULL) {
     return -1;
@@ -90,6 +96,11 @@ int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
 }
 
 struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
+  if (key == NULL) {
+    fprintf(stderr, "\nERR: rtree_get: invalid arg key\n");
+    return NULL;
+  }
+
   struct message_t* request = message_create();
   if (request == NULL) {
     return NULL;
@@ -114,6 +125,11 @@ struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
 }
 
 int rtree_del(struct rtree_t* rtree, char* key) {
+  if (key == NULL) {
+    fprintf(stderr, "\nERR: rtree_del: invalid arg key\n");
+    return -1;
+  }
+
   struct message_t* request = message_create();
   if (request == NULL) {
     return -1;

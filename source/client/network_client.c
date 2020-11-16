@@ -13,6 +13,10 @@
 #include <unistd.h>
 
 int network_connect(struct rtree_t* rtree) {
+  if (rtree == NULL) {
+    fprintf(stderr, "\nERR: network_connect: invalid rtree\n");
+    return -1;
+  }
 
   if ((rtree->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     perror("Error creating TCP socket\n");
@@ -44,6 +48,11 @@ int network_connect(struct rtree_t* rtree) {
 }
 
 struct message_t* network_send_receive(struct rtree_t* rtree, struct message_t* msg) {
+  if (rtree == NULL || msg == NULL) {
+    fprintf(stderr, "\nERR: network_send_receive: invalid args\n");
+    return NULL;
+  }
+
   int sockfd = rtree->sockfd;
 
   if (network_send_message(sockfd, msg) < 0) {
@@ -53,5 +62,9 @@ struct message_t* network_send_receive(struct rtree_t* rtree, struct message_t* 
 }
 
 int network_close(struct rtree_t* rtree) {
+  if (rtree == NULL) {
+    fprintf(stderr, "\nERR: network_close: invalid rtree\n");
+    return -1;
+  }
   return close(rtree->sockfd);
 }

@@ -137,6 +137,7 @@ struct tree_node_t** _tree_node_pointer_get(struct tree_node_t** pointer_to_root
 
 struct data_t* tree_get(struct tree_t* tree, char* key) {
   if (tree == NULL) {
+    fprintf(stderr, "\nERR: tree_get: invalid tree\n");
     return NULL;
   }
   if (tree->root == NULL) {
@@ -203,6 +204,7 @@ int _tree_compute_height(struct tree_node_t* node) {
 
 int tree_del(struct tree_t* tree, char* key) {
   if (tree == NULL || tree->root == NULL) {
+    fprintf(stderr, "\nERR: tree_del: invalid tree or tree->root\n");
     return -1;
   }
   struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
@@ -236,6 +238,7 @@ int _collect_keys(struct tree_node_t* node, char** keys, int next_index) {
 
 char** tree_get_keys(struct tree_t* tree) {
   if (tree == NULL) {
+    fprintf(stderr, "\nERR: tree_get_keys: invalid tree\n");
     return NULL;
   }
   char** keys = malloc(SIZE_OF_CHAR_POINTER * tree->size + SIZE_OF_NULL);
