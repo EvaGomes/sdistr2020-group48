@@ -18,6 +18,10 @@ void printTestDone() {
   printf(" --  PASSED");
 }
 
+void printNoAssertionsFailed() {
+  printf("\n\nDONE: No assertions failed!\n");
+}
+
 // **************************************************************
 // assertions
 // **************************************************************
@@ -160,4 +164,32 @@ void assertNodeHas(struct tree_node_t* actualNode, char* expectedKey, char* expe
   assertNodeHasKey(actualNode, expectedKey);
   assert(actualNode->entry->value != NULL);
   assertStrEquals(actualNode->entry->value->data, expectedValueData);
+}
+
+void assertMessageHasNoContent(struct message_t* actual, Message__OperationCode expected_op_code) {
+  assert(actual->msg != NULL);
+  assert(actual->msg->op_code == expected_op_code);
+  assert(actual->msg->content_case == CT_NONE);
+}
+
+void assertMessageHasValue(struct message_t* actual, Message__OperationCode expected_op_code,
+                           char* expected_data) {
+  assert(actual->msg != NULL);
+  assert(actual->msg->op_code == expected_op_code);
+  assert(actual->msg->content_case == CT_VALUE);
+  if (expected_data == NULL) {
+    assert(actual->msg->value->data.len == 0);
+    assert(actual->msg->value->data.data == NULL);
+  } else {
+    assert(actual->msg->value->data.len == strlen(expected_data) + 1);
+    assertStrEquals((char*) actual->msg->value->data.data, expected_data);
+  }
+}
+
+void assertMessageHasIntResult(struct message_t* actual, Message__OperationCode expected_op_code,
+                               int expected_int_result) {
+  assert(actual->msg != NULL);
+  assert(actual->msg->op_code == expected_op_code);
+  assert(actual->msg->content_case == CT_INT_RESULT);
+  assert(actual->msg->int_result == expected_int_result);
 }

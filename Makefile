@@ -76,7 +76,7 @@ clean:
 # --- tests ---
 
 TESTS_DIR := tests-private
-TESTS := data entry tree serialization all-private
+TESTS := data entry tree serialization all-private server-private
 TESTS_EXECS := $(TESTS:%=$(TESTS_DIR)/test_%.exe)
 
 .PHONY: privateTests
@@ -88,20 +88,22 @@ cleanPrivateTests:
 
 .PHONY: linkPrivateTests
 linkPrivateTests: $(TESTS_EXECS)
-$(TESTS_DIR)/test_all-private.exe: $(TESTS_DIR)/test_all-private.o \
-								   $(OBJS_DIR)/serialization.o \
-								   $(OBJS_DIR)/message-private.o $(OBJS_DIR)/sdmessage.pb-c.o \
-								   $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(TESTS_DIR)/test_serialization.exe: $(TESTS_DIR)/test_serialization.o \
-									 $(OBJS_DIR)/serialization.o \
-									 $(OBJS_DIR)/message-private.o $(OBJS_DIR)/sdmessage.pb-c.o \
-									 $(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(TESTS_DIR)/test_tree.exe: $(TESTS_DIR)/test_tree.o \
-							$(OBJS_DIR)/tree.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(TESTS_DIR)/test_entry.exe: $(TESTS_DIR)/test_entry.o \
-							 $(OBJS_DIR)/entry.o $(OBJS_DIR)/data.o
-$(TESTS_DIR)/test_data.exe: $(TESTS_DIR)/test_data.o \
-							 $(OBJS_DIR)/data.o
+$(TESTS_DIR)/test_server-private.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+									  $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
+									  $(OBJS_DIR)/server/tree_skel.o \
+								      $(TESTS_DIR)/test_server-private.o
+$(TESTS_DIR)/test_all-private.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+								   $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
+								   $(TESTS_DIR)/test_all-private.o
+$(TESTS_DIR)/test_serialization.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+									 $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
+									 $(TESTS_DIR)/test_serialization.o
+$(TESTS_DIR)/test_tree.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+							$(TESTS_DIR)/test_tree.o
+$(TESTS_DIR)/test_entry.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o \
+							 $(TESTS_DIR)/test_entry.o
+$(TESTS_DIR)/test_data.exe: $(OBJS_DIR)/data.o \
+							$(TESTS_DIR)/test_data.o
 $(TESTS_EXECS): %:
 	$(CC) $^ $(LINK_CFLAGS) -o $@
 	chmod 777 $@
