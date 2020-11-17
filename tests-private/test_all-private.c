@@ -243,6 +243,29 @@ void test__entry_compare__NULL_keys() {
 // tree.c
 // **************************************************************
 
+void test__tree_empty() {
+  printTestIntro("tree.c", "create and query tree with 0 nodes");
+
+  struct tree_t* tree = tree_create();
+
+  assert(tree != NULL);
+  assert(tree->root == NULL);
+
+  assert(tree->size == 0);
+  assert(tree_size(tree) == tree->size);
+
+  assert(tree->height == -1);
+  assert(tree_height(tree) == tree->height);
+
+  char** keys = tree_get_keys(tree);
+  assert(keys != NULL);
+  assert(keys[0] == NULL); // only 1 entry which is NULL
+
+  tree_free_keys(keys);
+  tree_destroy(tree);
+  printTestDone();
+}
+
 struct tree_t* _createTreeWith7Nodes() {
   struct tree_t* tree = tree_create();
 
@@ -296,19 +319,27 @@ void test__tree_with_NULLs() {
   struct data_t* valueForKey0 = data_create2(0, NULL);
 
   struct tree_t* tree = _createTreeWith7Nodes();
-  tree_put(tree, NULL, valueForNULLKey);
-  tree_put(tree, "key6", NULL);
-  tree_put(tree, "key0", valueForKey0);
+  int put_result;
+  put_result = tree_put(tree, NULL, valueForNULLKey);
+  assert(put_result < 0);
+  put_result = tree_put(tree, "key6", NULL);
+  assert(put_result < 0);
+  put_result = tree_put(tree, "key0", valueForKey0);
+  assert(put_result == 0);
 
   assert(tree != NULL);
-  assert(tree->size == 7 + 3);
-  assert(tree->height == 3 + 2);
+  assert(tree->size == 7 + 1);
+  assert(tree->height == 3 + 1);
   assert(tree->root != NULL);
 
   struct data_t* resultForNULLKey = tree_get(tree, NULL);
-  assertDataEquals(resultForNULLKey, valueForNULLKey);
+  assert(resultForNULLKey != NULL);
+  assert(resultForNULLKey->datasize == 0);
+  assert(resultForNULLKey->data == NULL);
   struct data_t* resultForKey6 = tree_get(tree, "key6");
-  assertDataEquals(resultForKey6, NULL);
+  assert(resultForKey6 != NULL);
+  assert(resultForKey6->datasize == 0);
+  assert(resultForKey6->data == NULL);
   struct data_t* resultForKey0 = tree_get(tree, "key0");
   assertDataEquals(resultForKey0, valueForKey0);
 
@@ -316,26 +347,22 @@ void test__tree_with_NULLs() {
   assertNodeHas(tree->root->left, "key3", "value3");
   assertNodeHas(tree->root->left->left, "key2", "value2");
   assertNodeHas(tree->root->left->left->left, "key1", "value1");
-  assertNodeHas(tree->root->left->left->left->left, NULL, "abc");
+  assertNodeHas(tree->root->left->left->left->left, "key0", NULL);
   /*  */ assert(tree->root->left->left->left->left->left == NULL);
-  assertNodeHas(tree->root->left->left->left->left->right, "key0", NULL);
-  /*  */ assert(tree->root->left->left->left->left->right->left == NULL);
-  /*  */ assert(tree->root->left->left->left->left->right->right == NULL);
+  /*  */ assert(tree->root->left->left->left->left->right == NULL);
   /*  */ assert(tree->root->left->left->left->right == NULL);
   /*  */ assert(tree->root->left->left->right == NULL);
   /*  */ assert(tree->root->left->right == NULL);
   assertNodeHas(tree->root->right, "key8", "value8");
   assertNodeHas(tree->root->right->left, "key5", "value5");
   /*  */ assert(tree->root->right->left->left == NULL);
-  assertNodeHasKeyAndNullValue(tree->root->right->left->right, "key6");
-  /*  */ assert(tree->root->right->left->right->left == NULL);
-  /*  */ assert(tree->root->right->left->right->right == NULL);
+  /*  */ assert(tree->root->right->left->right == NULL);
   assertNodeHas(tree->root->right->right, "key9", "value9");
   /*  */ assert(tree->root->right->right->left == NULL);
   /*  */ assert(tree->root->right->right->right == NULL);
 
-  assert(tree_del(tree, NULL) >= 0);
-  assert(tree_del(tree, "key6") >= 0);
+  assert(tree_del(tree, NULL) < 0);
+  assert(tree_del(tree, "key6") < 0);
   assert(tree_del(tree, "key0") >= 0);
   assert(tree->size == 7);
   assert(tree->height == 3);
@@ -476,12 +503,9 @@ void test__keys_to_msg() {
   assert(msg != NULL);
   assert(msg->n_keys == 3);
   assert(msg->keys != NULL);
-  assert(msg->keys[0] != NULL);
-  assertStrEquals(msg->keys[0]->str, key0);
-  assert(msg->keys[1] != NULL);
-  assertStrEquals(msg->keys[1]->str, key1);
-  assert(msg->keys[2] != NULL);
-  assertStrEquals(msg->keys[2]->str, key2);
+  assertStrEquals(msg->keys[0], key0);
+  assertStrEquals(msg->keys[1], key1);
+  assertStrEquals(msg->keys[2], key2);
 
   char** keys_from_msg = msg_to_keys(msg);
   assertStrArrEquals(keys_from_msg, keys);
@@ -707,12 +731,9 @@ void test__entry_serialization__NULL_key_and_NULL_value() {
 void test__tree_serialization() {
   printTestIntro("serialization.c", "tree_to_buffer and buffer_to_tree");
 
-  struct data_t* valueForNULLKey = data_create2(4, strdup("abc"));
   struct data_t* valueForKey0 = data_create2(0, NULL);
 
   struct tree_t* tree = _createTreeWith7Nodes();
-  tree_put(tree, NULL, valueForNULLKey);
-  tree_put(tree, "key6", NULL);
   tree_put(tree, "key0", valueForKey0);
 
   char* serialized_tree;
@@ -720,28 +741,24 @@ void test__tree_serialization() {
   struct tree_t* deserialized_tree = buffer_to_tree(serialized_tree, len_serialized_tree);
 
   assert(deserialized_tree != NULL);
-  assert(deserialized_tree->size == 7 + 3);
-  assert(deserialized_tree->height == 3 + 2);
+  assert(deserialized_tree->size == 7 + 1);
+  assert(deserialized_tree->height == 3 + 1);
   assert(deserialized_tree->root != NULL);
 
   assertNodeHas(deserialized_tree->root, "key4", "value4");
   assertNodeHas(deserialized_tree->root->left, "key3", "value3");
   assertNodeHas(deserialized_tree->root->left->left, "key2", "value2");
   assertNodeHas(deserialized_tree->root->left->left->left, "key1", "value1");
-  assertNodeHas(deserialized_tree->root->left->left->left->left, NULL, "abc");
+  assertNodeHas(deserialized_tree->root->left->left->left->left, "key0", NULL);
   /*  */ assert(deserialized_tree->root->left->left->left->left->left == NULL);
-  assertNodeHas(deserialized_tree->root->left->left->left->left->right, "key0", NULL);
-  /*  */ assert(deserialized_tree->root->left->left->left->left->right->left == NULL);
-  /*  */ assert(deserialized_tree->root->left->left->left->left->right->right == NULL);
+  /*  */ assert(deserialized_tree->root->left->left->left->left->right == NULL);
   /*  */ assert(deserialized_tree->root->left->left->left->right == NULL);
   /*  */ assert(deserialized_tree->root->left->left->right == NULL);
   /*  */ assert(deserialized_tree->root->left->right == NULL);
   assertNodeHas(deserialized_tree->root->right, "key8", "value8");
   assertNodeHas(deserialized_tree->root->right->left, "key5", "value5");
   /*  */ assert(deserialized_tree->root->right->left->left == NULL);
-  assertNodeHasKeyAndNullValue(deserialized_tree->root->right->left->right, "key6");
-  /*  */ assert(deserialized_tree->root->right->left->right->left == NULL);
-  /*  */ assert(deserialized_tree->root->right->left->right->right == NULL);
+  /*  */ assert(deserialized_tree->root->right->left->right == NULL);
   assertNodeHas(deserialized_tree->root->right->right, "key9", "value9");
   /*  */ assert(deserialized_tree->root->right->right->left == NULL);
   /*  */ assert(deserialized_tree->root->right->right->right == NULL);
@@ -750,7 +767,6 @@ void test__tree_serialization() {
   free(serialized_tree);
   tree_destroy(tree);
   data_destroy(valueForKey0);
-  data_destroy(valueForNULLKey);
 
   printTestDone();
 }
@@ -783,7 +799,7 @@ void test__message_serialization__CT_KEY() {
   struct message_t* message = message_create();
   message->msg->op_code = OP_GET;
   message->msg->content_case = CT_KEY;
-  message->msg->key = string_to_msg(key);
+  message->msg->key = strdup(key);
 
   char* buffer;
   int buffer_size = message_to_buffer(message, &buffer);
@@ -804,6 +820,32 @@ void test__message_serialization__CT_VALUE() {
 
   char* data = strdup("1234567890abc");
   struct data_t* value = data_create2(strlen(data) + 1, data);
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GET + 1;
+  message->msg->content_case = CT_VALUE;
+  message->msg->value = data_to_msg(value);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+  data_destroy(value);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_VALUE__NULL_data() {
+  printTestIntro(
+      "serialization.c",
+      "message_to_buffer and buffer_to_message content_case=CT_VALUE with NULL data_t.data");
+
+  struct data_t* value = data_create2(0, NULL);
 
   struct message_t* message = message_create();
   message->msg->op_code = OP_GET + 1;
@@ -880,6 +922,30 @@ void test__message_serialization__CT_KEYS() {
   printTestDone();
 }
 
+void test__message_serialization__CT_KEYS__empty() {
+  printTestIntro("serialization.c",
+                 "message_to_buffer and buffer_to_message content_case=CT_KEYS empty keys");
+
+  char* keys[1] = {NULL};
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_GETKEYS + 1;
+  message->msg->content_case = CT_KEYS;
+  message->msg->keys = keys_to_msg(keys);
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+
+  printTestDone();
+}
+
 void test__message_serialization__CT_INT_RESULT() {
   printTestIntro("serialization.c",
                  "message_to_buffer and buffer_to_message content_case=CT_INT_RESULT");
@@ -922,6 +988,7 @@ int main() {
   test__entry_compare__NULL_entries();
   test__entry_compare__NULL_keys();
 
+  test__tree_empty();
   test__tree_with_7_nodes();
   test__tree_with_NULLs();
   test__tree_get__unexistent_key();
@@ -946,10 +1013,12 @@ int main() {
   test__message_serialization__CT_NONE();
   test__message_serialization__CT_KEY();
   test__message_serialization__CT_VALUE();
+  test__message_serialization__CT_VALUE__NULL_data();
   test__message_serialization__CT_ENTRY();
   test__message_serialization__CT_KEYS();
+  test__message_serialization__CT_KEYS__empty();
   test__message_serialization__CT_INT_RESULT();
 
-  printf("\n\nDONE: No assertions failed!\n");
+  printNoAssertionsFailed();
   return 0;
 }

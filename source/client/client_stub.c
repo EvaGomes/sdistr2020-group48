@@ -10,8 +10,6 @@
 #include "message-private.h"
 #include "network_client.h"
 
-#include <errno.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +105,7 @@ struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
   }
   request->msg->op_code = OP_GET;
   request->msg->content_case = CT_KEY;
-  request->msg->key = string_to_msg(key);
+  request->msg->key = strdup(key);
 
   struct message_t* response = network_send_receive(rtree, request);
   message_destroy(request);
@@ -136,7 +134,7 @@ int rtree_del(struct rtree_t* rtree, char* key) {
   }
   request->msg->op_code = OP_DEL;
   request->msg->content_case = CT_KEY;
-  request->msg->key = string_to_msg(key);
+  request->msg->key = strdup(key);
 
   struct message_t* response = network_send_receive(rtree, request);
   message_destroy(request);

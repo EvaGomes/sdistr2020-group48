@@ -126,7 +126,7 @@ void _test_height(int expected_height) {
 
 void _test_del(char* key) {
   struct message_t* message = _message_t_create(OP_DEL, CT_KEY);
-  message->msg->key = string_to_msg(key);
+  message->msg->key = strdup(key);
   assert(invoke(message) == 0);
   assertMessageHasNoContent(message, OP_DEL + 1);
   message_destroy(message);
@@ -134,7 +134,7 @@ void _test_del(char* key) {
 
 void _test_get(char* key, char* expected_value) {
   struct message_t* message = _message_t_create(OP_GET, CT_KEY);
-  message->msg->key = string_to_msg(key);
+  message->msg->key = strdup(key);
   assert(invoke(message) == 0);
   assertMessageHasValue(message, OP_GET + 1, expected_value);
   message_destroy(message);
@@ -157,14 +157,13 @@ void _test_getkeys(int expected_n_keys, char** expected_keys) {
   assert(actual_message->msg->content_case == CT_KEYS);
   assert(actual_message->msg->keys != NULL);
   assert(actual_message->msg->keys->n_keys == expected_n_keys);
-  NullableString** actual_keys = actual_message->msg->keys->keys;
+  char** actual_keys = actual_message->msg->keys->keys;
   if (expected_keys == NULL) {
     assert(actual_keys == NULL);
   } else {
     assert(actual_keys != NULL);
     for (int i = 0; i < expected_n_keys; ++i) {
-      assert(actual_keys[i] != NULL);
-      assertStrEquals(actual_keys[i]->str, expected_keys[i]);
+      assertStrEquals(actual_keys[i], expected_keys[i]);
     }
   }
 
@@ -183,13 +182,13 @@ void test__tree_skel__invoke() {
   _test_height(-1);
 
   message = _message_t_create(OP_DEL, CT_KEY);
-  message->msg->key = string_to_msg("key1");
+  message->msg->key = strdup("key1");
   assert(invoke(message) == 0);
   assertMessageHasNoContent(message, OP_ERROR);
   message_destroy(message);
 
   message = _message_t_create(OP_GET, CT_KEY);
-  message->msg->key = string_to_msg("key1");
+  message->msg->key = strdup("key1");
   assert(invoke(message) == 0);
   assertMessageHasValue(message, OP_GET + 1, NULL);
   message_destroy(message);

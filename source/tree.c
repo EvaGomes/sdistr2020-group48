@@ -98,11 +98,12 @@ void _tree_put(struct tree_t* tree, char* copied_key, struct data_t* copied_valu
 }
 
 int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
-  if (tree == NULL) {
+  if (tree == NULL || key == NULL || value == NULL) {
+    fprintf(stderr, "\nERR: tree_put: invalid arg\n");
     return -1;
   }
 
-  char* copied_key = key == NULL ? NULL : strdup(key);
+  char* copied_key = strdup(key);
   struct data_t* copied_value = data_dup(value);
 
   if (tree->root == NULL) {

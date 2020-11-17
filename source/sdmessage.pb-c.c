@@ -365,11 +365,11 @@ static const ProtobufCFieldDescriptor keys_message__field_descriptors[1] =
     "keys",
     1,
     PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
+    PROTOBUF_C_TYPE_STRING,
     offsetof(KeysMessage, n_keys),
     offsetof(KeysMessage, keys),
-    &nullable_string__descriptor,
     NULL,
+    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
@@ -455,11 +455,11 @@ static const ProtobufCFieldDescriptor message__field_descriptors[6] =
     "key",
     10,
     PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
+    PROTOBUF_C_TYPE_STRING,
     offsetof(Message, content_case),
     offsetof(Message, key),
-    &nullable_string__descriptor,
     NULL,
+    &protobuf_c_empty_string,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },

@@ -101,9 +101,9 @@ KeysMessage* keys_to_msg(char** keys) {
     return msg;
   }
 
-  msg->keys = malloc(keys_count * sizeof(NullableString*));
+  msg->keys = malloc(keys_count * sizeof(char*));
   for (int i = 0; i < keys_count; ++i) {
-    msg->keys[i] = string_to_msg(keys[i]);
+    msg->keys[i] = strdup(keys[i]);
   }
   return msg;
 }
@@ -115,7 +115,7 @@ char** msg_to_keys(KeysMessage* msg) {
   int n_keys = msg->n_keys;
   char** keys = malloc((n_keys + 1) * sizeof(char*));
   for (int i = 0; i < n_keys; ++i) {
-    keys[i] = msg_to_string(msg->keys[i]);
+    keys[i] = strdup(msg->keys[i]);
   }
   keys[n_keys] = NULL;
   return keys;

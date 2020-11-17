@@ -37,22 +37,18 @@ void _invoke_tree_height(Message* request, Message* response) {
 }
 
 void _invoke_tree_del(Message* request, Message* response) {
-  char* key = msg_to_string(request->key);
-  int del_result = tree_del(tree, key);
+  int del_result = tree_del(tree, request->key);
   response->op_code = (del_result == 0) ? (request->op_code + 1) : OP_ERROR;
   response->content_case = CT_NONE;
-  free(key);
 }
 
 void _invoke_tree_get(Message* request, Message* response) {
-  char* key = msg_to_string(request->key);
-  struct data_t* value = tree_get(tree, key);
+  struct data_t* value = tree_get(tree, request->key);
   if (value != NULL) {
     response->op_code = request->op_code + 1;
     response->content_case = CT_VALUE;
     response->value = data_to_msg(value);
     data_destroy(value);
-    free(key);
   } else {
     response->op_code = OP_ERROR;
     response->content_case = CT_NONE;

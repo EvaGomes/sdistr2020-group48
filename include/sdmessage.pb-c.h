@@ -94,7 +94,7 @@ struct  _KeysMessage
 {
   ProtobufCMessage base;
   size_t n_keys;
-  NullableString **keys;
+  char **keys;
 };
 #define KEYS_MESSAGE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&keys_message__descriptor) \
@@ -126,7 +126,7 @@ struct  _Message
   Message__OperationCode op_code;
   Message__ContentCase content_case;
   union {
-    NullableString *key;
+    char *key;
     DataMessage *value;
     EntryMessage *entry;
     KeysMessage *keys;

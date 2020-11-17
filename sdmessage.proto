@@ -20,7 +20,7 @@ message EntryMessage {
 }
 
 message KeysMessage {
-        repeated NullableString keys =1;
+        repeated string keys =1;
 }
 
 /*
@@ -54,7 +54,7 @@ message Message {
 
         /* The content of this message. */
         oneof Content {
-                NullableString key = 10;
+                string key = 10;
                 DataMessage value = 20;
                 EntryMessage entry = 30;
                 KeysMessage keys = 40;

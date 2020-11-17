@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void printTestIntro(char* moduleName, char* testName) {
-  printf("\n%s -- %s", moduleName, testName);
+void printTestIntro(char* module_name, char* test_name) {
+  const int intro_length = strlen(module_name) + 4 + strlen(test_name);
+  const int spaces_count = (intro_length < 100) ? (100 - intro_length) : 0;
+  printf("\n%s -- %s%*c  --  ", module_name, test_name, spaces_count, ' ');
 }
 
 void pee(const char* msg) {
@@ -15,7 +17,7 @@ void pee(const char* msg) {
 }
 
 void printTestDone() {
-  printf(" --  PASSED");
+  printf("PASSED");
 }
 
 void printNoAssertionsFailed() {
@@ -114,7 +116,7 @@ void assertKeysMessage(KeysMessage* actual, KeysMessage* expected) {
     assert(actual != NULL);
     assert(actual->n_keys == expected->n_keys);
     for (int i = 0; i < expected->n_keys; ++i) {
-      assertNullableStringEquals(actual->keys[i], expected->keys[i]);
+      assertStrEquals(actual->keys[i], expected->keys[i]);
     }
   }
 }
@@ -128,7 +130,7 @@ void assertMessageEquals(Message* actual, Message* expected) {
     assert(actual->content_case == expected->content_case);
     switch (expected->content_case) {
       case CT_KEY:
-        assertNullableStringEquals(actual->key, expected->key);
+        assertStrEquals(actual->key, expected->key);
         break;
       case CT_VALUE:
         assertDataMessageEquals(actual->value, expected->value);
@@ -151,12 +153,6 @@ void assertMessageEquals(Message* actual, Message* expected) {
 void assertNodeHasKey(struct tree_node_t* actualNode, char* expectedKey) {
   assert(actualNode != NULL);
   assertStrEquals(actualNode->entry->key, expectedKey);
-}
-
-void assertNodeHasKeyAndNullValue(struct tree_node_t* actualNode, char* expectedKey) {
-  assert(actualNode != NULL);
-  assertNodeHasKey(actualNode, expectedKey);
-  assert(actualNode->entry->value == NULL);
 }
 
 void assertNodeHas(struct tree_node_t* actualNode, char* expectedKey, char* expectedValueData) {
