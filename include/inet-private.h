@@ -6,9 +6,6 @@
 
 #include "message-private.h"
 
-// tamanho máximo da mensagem enviada pelo cliente
-#define MAX_MSG 2048
-
 /* Registers an handler to ignore SIGPIPE signals.
  *  Returns 0 if registration went fine or -1 if it failed.
  */

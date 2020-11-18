@@ -14,16 +14,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* The maximum length of the string input by the user. */
+#define MAX_INPUT_LEN 5000
+
 /* Collects a string, with maximum length MAX_MSG, written by the user in the console. */
 char* _collect_input() {
 
-  char* input_str = malloc(MAX_MSG * sizeof(char));
+  char* input_str = malloc(MAX_INPUT_LEN * sizeof(char));
   if (input_str == NULL) {
     fprintf(stderr, "ERR: _collect_input: malloc failed\n");
     return NULL;
   }
   printf("> ");
-  fgets(input_str, MAX_MSG, stdin);
+  fgets(input_str, MAX_INPUT_LEN, stdin);
 
   // prune: free over occupied space and drop \n at the end
   size_t input_str_len = strlen(input_str);
