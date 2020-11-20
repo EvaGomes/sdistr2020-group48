@@ -8,8 +8,9 @@
 #include "data.h"
 #include "entry-private.h"
 #include "entry.h"
+#include "logger-private.h"
 #include "tree-private.h"
-#include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,7 +22,7 @@
 struct tree_t* tree_create() {
   struct tree_t* tree = malloc(SIZE_OF_TREE_T);
   if (tree == NULL) {
-    fprintf(stderr, "\nERR: tree_create: malloc failed\n");
+    logger_error_malloc_failed("tree_create");
     return NULL;
   }
   tree->root = NULL;
@@ -51,7 +52,7 @@ void tree_destroy(struct tree_t* tree) {
 struct tree_node_t* _node_create(char* key, struct data_t* value) {
   struct tree_node_t* newNode = malloc(SIZE_OF_TREE_NODE_T);
   if (newNode == NULL) {
-    fprintf(stderr, "\nERR: _node_create: malloc failed\n");
+    logger_error_malloc_failed("_node_create");
     return NULL;
   }
   newNode->entry = entry_create(key, value);
@@ -99,7 +100,7 @@ void _tree_put(struct tree_t* tree, char* copied_key, struct data_t* copied_valu
 
 int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
   if (tree == NULL || key == NULL || value == NULL) {
-    fprintf(stderr, "\nERR: tree_put: invalid arg\n");
+    logger_error_invalid_args("tree_put");
     return -1;
   }
 
@@ -138,7 +139,7 @@ struct tree_node_t** _tree_node_pointer_get(struct tree_node_t** pointer_to_root
 
 struct data_t* tree_get(struct tree_t* tree, char* key) {
   if (tree == NULL) {
-    fprintf(stderr, "\nERR: tree_get: invalid tree\n");
+    logger_error_invalid_arg("tree_get", "tree", "NULL");
     return NULL;
   }
   if (tree->root == NULL) {
@@ -205,7 +206,7 @@ int _tree_compute_height(struct tree_node_t* node) {
 
 int tree_del(struct tree_t* tree, char* key) {
   if (tree == NULL || tree->root == NULL) {
-    fprintf(stderr, "\nERR: tree_del: invalid tree or tree->root\n");
+    logger_error_invalid_args("tree_del");
     return -1;
   }
   struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
@@ -239,12 +240,12 @@ int _collect_keys(struct tree_node_t* node, char** keys, int next_index) {
 
 char** tree_get_keys(struct tree_t* tree) {
   if (tree == NULL) {
-    fprintf(stderr, "\nERR: tree_get_keys: invalid tree\n");
+    logger_error_invalid_arg("tree_del", "tree", "NULL");
     return NULL;
   }
   char** keys = malloc(SIZE_OF_CHAR_POINTER * tree->size + SIZE_OF_NULL);
   if (keys == NULL) {
-    fprintf(stderr, "\nERR: tree_get_keys: malloc failed\n");
+    logger_error_malloc_failed("tree_get_keys");
     return NULL;
   }
   int last_index = _collect_keys(tree->root, keys, 0);

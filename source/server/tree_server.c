@@ -5,6 +5,7 @@
  */
 
 #include "inet-private.h"
+#include "logger-private.h"
 #include "network_server.h"
 
 #include <arpa/inet.h>
@@ -31,16 +32,16 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Invalid argument \"%s\"\n", argv[1]);
     return -1;
   }
-  
-    int listening_socket = network_server_init(port);
-    if (listening_socket < 0) {
-      return -1;
-    }
 
-    if (network_main_loop(listening_socket) < 0) {
-        fprintf(stderr, "Unexpected error in network_main_loop");
-    }
+  int listening_socket = network_server_init(port);
+  if (listening_socket < 0) {
+    return -1;
+  }
 
-    network_server_close();
-    return close(listening_socket);
+  if (network_main_loop(listening_socket) < 0) {
+    logger_error("tree_server", "Unexpected error in network_main_loop");
+  }
+
+  network_server_close();
+  return close(listening_socket);
 }

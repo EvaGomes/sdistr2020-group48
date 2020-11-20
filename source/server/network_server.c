@@ -5,11 +5,11 @@
  */
 
 #include "inet-private.h"
+#include "logger-private.h"
 #include "message-private.h"
 #include "tree_skel.h"
 
 #include <netinet/in.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -17,13 +17,13 @@ int network_server_init(short port) {
   int listening_socket;
 
   if ((listening_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    perror("Error creating TCP socket");
+    logger_perror("network_server_init", "Failed to create TCP socket");
     return -1;
   }
 
   int enable = 1;
   if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-    perror("Failed to allow reuse of local addresses");
+    logger_perror("network_server_init", "Failed to allow reuse of local addresses");
   }
 
   struct sockaddr_in server;
@@ -32,24 +32,24 @@ int network_server_init(short port) {
   server.sin_addr.s_addr = htonl(INADDR_ANY);
 
   if (bind(listening_socket, (struct sockaddr*) &server, sizeof(server)) < 0) {
-    perror("Failed to bind the socket to the local address");
+    logger_perror("network_server_init", "Failed to bind the socket to the local address");
     close(listening_socket);
     return -1;
   }
 
   if (listen(listening_socket, 0) < 0) {
-    perror("Failed to prepare socket for listening");
+    logger_perror("network_server_init", "Failed to prepare socket for listening");
     close(listening_socket);
     return -1;
   }
 
   if (tree_skel_init() < 0) {
-    perror("Failed to init the binary tree...");
+    logger_perror("network_server_init", "Failed to init the binary tree");
     close(listening_socket);
     return -1;
   }
 
-  printf("\nServer is ready...\n");
+  logger_info("\nServer is ready...\n");
   return listening_socket;
 }
 
@@ -68,10 +68,13 @@ int _client_connection_loop(int connsockfd) {
     if (message == NULL) {
       return -1;
     }
+
+    logger_info__sockfd(connsockfd, "Handling message from client...");
     if (invoke(message) < 0) {
       message_destroy(message);
       return -1;
     }
+
     int send_result = network_send(connsockfd, message);
     message_destroy(message);
     if (send_result < 0) {
@@ -87,10 +90,10 @@ int network_main_loop(int listening_socket) {
   socklen_t size_client = 0;
 
   while ((connsockfd = accept(listening_socket, (struct sockaddr*) &client, &size_client)) != -1) {
-    printf("sockfd=%d - Accepted client connection\n", connsockfd);
+    logger_info__sockfd(connsockfd, "Accepted client connection");
     _client_connection_loop(connsockfd);
     close(connsockfd);
-    printf("sockfd=%d - Closed client connection\n", connsockfd);
+    logger_info__sockfd(connsockfd, "Closed client connection");
   }
   return 0;
 }

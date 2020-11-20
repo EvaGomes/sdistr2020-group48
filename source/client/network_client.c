@@ -6,20 +6,20 @@
 
 #include "client_stub-private.h"
 #include "inet-private.h"
+#include "logger-private.h"
 
 #include <arpa/inet.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 int network_connect(struct rtree_t* rtree) {
   if (rtree == NULL) {
-    fprintf(stderr, "\nERR: network_connect: invalid rtree\n");
+    logger_error_invalid_arg("network_connect", "rtree", "NULL");
     return -1;
   }
 
   if ((rtree->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    perror("Error creating TCP socket\n");
+    logger_perror("network_connect", "Failed to create TCP socket");
     return -1;
   }
 
@@ -32,24 +32,25 @@ int network_connect(struct rtree_t* rtree) {
   server.sin_port = htons(server_port);
 
   if (inet_pton(AF_INET, server_ip_address, &server.sin_addr) < 1) {
-    fprintf(stderr, "Error converting server's IP address \"%s\"\n", server_ip_address);
+    logger_perror("network_connect", "Failed to convert server's IP \"%s\"", server_ip_address);
     close(sockfd);
     return -1;
   }
 
   if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
-    fprintf(stderr, "Error connecting to server at %s:%d\n", server_ip_address, server_port);
+    logger_perror("network_connect", "Failed to connect to server at %s:%d", server_ip_address,
+                  server_port);
     close(sockfd);
     return -1;
   }
 
-  printf("\nConnected to server at %s:%d...\n", rtree->server_ip_address, rtree->server_port);
+  logger_info("\nConnected to server at %s:%d...\n", rtree->server_ip_address, rtree->server_port);
   return 0;
 }
 
 struct message_t* network_send_receive(struct rtree_t* rtree, struct message_t* msg) {
-  if (rtree == NULL || msg == NULL) {
-    fprintf(stderr, "\nERR: network_send_receive: invalid args\n");
+  if (rtree == NULL) {
+    logger_error_invalid_arg("network_send_receive", "tree", "NULL");
     return NULL;
   }
 
@@ -63,7 +64,7 @@ struct message_t* network_send_receive(struct rtree_t* rtree, struct message_t* 
 
 int network_close(struct rtree_t* rtree) {
   if (rtree == NULL) {
-    fprintf(stderr, "\nERR: network_close: invalid rtree\n");
+    logger_error_invalid_arg("network_close", "rtree", "NULL");
     return -1;
   }
   return close(rtree->sockfd);

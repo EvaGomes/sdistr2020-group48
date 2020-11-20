@@ -7,10 +7,10 @@
 #include "client_stub-private.h"
 #include "data.h"
 #include "entry.h"
+#include "logger-private.h"
 #include "message-private.h"
 #include "network_client.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,7 +25,7 @@ void _rtree_destroy(struct rtree_t* rtree) {
 
 struct rtree_t* rtree_connect(const char* address_port) {
   if (address_port == NULL) {
-    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    logger_error_invalid_arg("rtree_connect", "address_port", address_port);
     return NULL;
   }
 
@@ -38,18 +38,18 @@ struct rtree_t* rtree_connect(const char* address_port) {
   char* port_str = strtok(NULL, delimiter);
 
   if (port_str == NULL) {
-    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    logger_error_invalid_arg("rtree_connect", "address_port", address_port);
     return NULL;
   }
   int port = atoi(port_str);
   if (port == 0) {
-    fprintf(stderr, "\nERR: rtree_connect: invalid address_port \"%s\"\n", address_port);
+    logger_error_invalid_arg("rtree_connect", "address_port", address_port);
     return NULL;
   }
 
   struct rtree_t* rtree = malloc(SIZE_OF_RTREE);
   if (rtree == NULL) {
-    fprintf(stderr, "\nERR: rtree_connect: malloc failed\n");
+    logger_error_malloc_failed("rtree_connect");
     return NULL;
   }
   rtree->server_ip_address = strdup(ip_adress);
@@ -71,7 +71,7 @@ int rtree_disconnect(struct rtree_t* rtree) {
 
 int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
   if (entry == NULL) {
-    fprintf(stderr, "\nERR: rtree_put: invalid arg entry\n");
+    logger_error_invalid_arg("rtree_put", "entry", "NULL");
     return -1;
   }
 
@@ -95,7 +95,7 @@ int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
 
 struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
   if (key == NULL) {
-    fprintf(stderr, "\nERR: rtree_get: invalid arg key\n");
+    logger_error_invalid_arg("rtree_get", "key", key);
     return NULL;
   }
 
@@ -124,7 +124,7 @@ struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
 
 int rtree_del(struct rtree_t* rtree, char* key) {
   if (key == NULL) {
-    fprintf(stderr, "\nERR: rtree_del: invalid arg key\n");
+    logger_error_invalid_arg("rtree_del", "key", key);
     return -1;
   }
 
@@ -220,5 +220,5 @@ char** rtree_get_keys(struct rtree_t* rtree) {
 }
 
 void rtree_free_keys(char** keys) {
-  // TODO
+  logger_error("rtree_free_keys", "Not implemented");
 }

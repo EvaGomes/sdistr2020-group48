@@ -6,6 +6,7 @@
 
 #include "client_stub-private.h"
 #include "inet-private.h"
+#include "logger-private.h"
 #include "network_client.h"
 #include "tree.h"
 
@@ -22,7 +23,7 @@ char* _collect_input() {
 
   char* input_str = malloc(MAX_INPUT_LEN * sizeof(char));
   if (input_str == NULL) {
-    fprintf(stderr, "ERR: _collect_input: malloc failed\n");
+    logger_error_malloc_failed("_collect_input");
     return NULL;
   }
   printf("> ");

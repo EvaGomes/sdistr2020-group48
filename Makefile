@@ -39,7 +39,8 @@ link: $(EXECS)
 # link execs
 $(EXECS_DIR)/tree_client: $(LIBS_DIR)/client-lib.o \
                           $(OBJS_DIR)/$(CLIENT_SUBDIR)/tree_client.o
-$(EXECS_DIR)/tree_server: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(EXECS_DIR)/tree_server: $(OBJS_DIR)/logger-private.o \
+						  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
                           $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
                           $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
                           $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
@@ -49,7 +50,8 @@ $(EXECS): $:
 	chmod 777 $@
 
 # link libs
-$(LIBS_DIR)/client-lib.o: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(LIBS_DIR)/client-lib.o: $(OBJS_DIR)/logger-private.o \
+						  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
                           $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
 						  $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(CLIENT_SUBDIR)/network_client.o \
                           $(OBJS_DIR)/$(CLIENT_SUBDIR)/client_stub.o
@@ -88,21 +90,27 @@ cleanPrivateTests:
 
 .PHONY: linkPrivateTests
 linkPrivateTests: $(TESTS_EXECS)
-$(TESTS_DIR)/test_server-private.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(TESTS_DIR)/test_server-private.exe: $(OBJS_DIR)/logger-private.o \
+							 		  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
 									  $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
 									  $(OBJS_DIR)/server/tree_skel.o \
 								      $(TESTS_DIR)/test_server-private.o
-$(TESTS_DIR)/test_all-private.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(TESTS_DIR)/test_all-private.exe: $(OBJS_DIR)/logger-private.o \
+							 	   $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
 								   $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
 								   $(TESTS_DIR)/test_all-private.o
-$(TESTS_DIR)/test_serialization.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(TESTS_DIR)/test_serialization.exe: $(OBJS_DIR)/logger-private.o \
+							 		 $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
 									 $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
 									 $(TESTS_DIR)/test_serialization.o
-$(TESTS_DIR)/test_tree.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
+$(TESTS_DIR)/test_tree.exe: $(OBJS_DIR)/logger-private.o \
+							$(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
 							$(TESTS_DIR)/test_tree.o
-$(TESTS_DIR)/test_entry.exe: $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o \
+$(TESTS_DIR)/test_entry.exe: $(OBJS_DIR)/logger-private.o \
+							 $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o \
 							 $(TESTS_DIR)/test_entry.o
-$(TESTS_DIR)/test_data.exe: $(OBJS_DIR)/data.o \
+$(TESTS_DIR)/test_data.exe: $(OBJS_DIR)/logger-private.o \
+							$(OBJS_DIR)/data.o \
 							$(TESTS_DIR)/test_data.o
 $(TESTS_EXECS): %:
 	$(CC) $^ $(LINK_CFLAGS) -o $@

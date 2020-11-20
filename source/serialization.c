@@ -6,11 +6,12 @@
 
 #include "data.h"
 #include "entry.h"
+#include "logger-private.h"
 #include "message-private.h"
 #include "sdmessage.pb-c.h"
 #include "tree-private.h"
 #include "tree.h"
-#include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,7 +30,7 @@ int data_to_buffer(struct data_t* dataStruct, char** data_buf) {
   int buffer_size = data_message__get_packed_size(msg);
   uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
-    fprintf(stderr, "\nERR: data_to_buffer: malloc failed\n");
+    logger_error_malloc_failed("data_to_buffer");
     return -1;
   }
   data_message__pack(msg, buffer);
@@ -65,7 +66,7 @@ int entry_to_buffer(struct entry_t* entry, char** entry_buf) {
   int buffer_size = entry_message__get_packed_size(msg);
   uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
-    fprintf(stderr, "\nERR: entry_to_buffer: malloc failed\n");
+    logger_error_malloc_failed("entry_to_buffer");
     return -1;
   }
   entry_message__pack(msg, buffer);
@@ -119,7 +120,7 @@ int tree_to_buffer(struct tree_t* tree, char** tree_buf) {
 
   char* buffer = malloc(len_buffer);
   if (buffer == NULL) {
-    fprintf(stderr, "\nERR: tree_to_buffer: malloc failed\n");
+    logger_error_malloc_failed("tree_to_buffer");
     return -1;
   }
   int current_index = 0;
@@ -169,7 +170,7 @@ int message_to_buffer(struct message_t* message, char** message_buf) {
   int buffer_size = message__get_packed_size(msg);
   uint8_t* buffer = malloc(buffer_size);
   if (buffer == NULL) {
-    fprintf(stderr, "\nERR: message_to_buffer: malloc failed\n");
+    logger_error_malloc_failed("message_to_buffer");
     return -1;
   }
   message__pack(msg, buffer);
@@ -186,7 +187,7 @@ struct message_t* buffer_to_message(char* buffer, int buffer_size) {
   Message* msg = message__unpack(NULL, buffer_size, (uint8_t*) buffer);
   struct message_t* message = malloc(sizeof(struct message_t*));
   if (message == NULL) {
-    fprintf(stderr, "\nERR: buffer_to_message: malloc failed\n");
+    logger_error_malloc_failed("buffer_to_message");
     return NULL;
   }
   message->msg = msg;

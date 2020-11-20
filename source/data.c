@@ -6,7 +6,8 @@
 
 #include "data.h"
 #include "data-private.h"
-#include <stdio.h>
+#include "logger-private.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,7 +15,7 @@
 
 struct data_t* data_create(int size) {
   if (size < 0) {
-    fprintf(stderr, "\nERR: data_create: invalid size %d\n", size);
+    logger_error_invalid_arg("data_create", "size", "negative");
     return NULL;
   }
   if (size == 0) {
@@ -22,7 +23,7 @@ struct data_t* data_create(int size) {
   }
   void* data = malloc(size);
   if (data == NULL) {
-    fprintf(stderr, "\nERR: data_create: malloc failed\n");
+    logger_error_malloc_failed("data_create");
     return NULL;
   }
   return data_create2(size, data);
@@ -34,11 +35,12 @@ int _areParamsInvalid(int size, void* data) {
 
 struct data_t* data_create2(int size, void* data) {
   if (_areParamsInvalid(size, data)) {
+    logger_error_invalid_args("data_create2");
     return NULL;
   }
   struct data_t* dataStruct = malloc(SIZE_OF_DATA_T);
   if (dataStruct == NULL) {
-    fprintf(stderr, "\nERR: data_create2: malloc failed\n");
+    logger_error_malloc_failed("data_create2");
     return NULL;
   }
   dataStruct->datasize = size;
@@ -59,7 +61,7 @@ void* copy(void* something, int size) {
   }
   void* copy = malloc(size);
   if (copy == NULL) {
-    fprintf(stderr, "\nERR: copy: malloc failed\n");
+    logger_error_malloc_failed("copy");
     return NULL;
   }
   memcpy(copy, something, size);
@@ -68,6 +70,7 @@ void* copy(void* something, int size) {
 
 struct data_t* data_dup(struct data_t* dataStruct) {
   if (dataStruct == NULL || _areParamsInvalid(dataStruct->datasize, dataStruct->data)) {
+    logger_error_invalid_args("data_dup");
     return NULL;
   }
   int datasize = dataStruct->datasize;

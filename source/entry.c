@@ -7,7 +7,8 @@
 #include "entry.h"
 #include "data.h"
 #include "entry-private.h"
-#include <stdio.h>
+#include "logger-private.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,7 +17,7 @@
 struct entry_t* entry_create(char* key, struct data_t* data) {
   struct entry_t* entry = malloc(SIZE_OF_ENTRY_T);
   if (entry == NULL) {
-    fprintf(stderr, "\nERR: entry_create: malloc failed\n");
+    logger_error_malloc_failed("entry_create");
     return NULL;
   }
   entry->key = key;

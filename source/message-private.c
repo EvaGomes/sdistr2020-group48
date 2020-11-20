@@ -2,9 +2,9 @@
 #include "data-private.h"
 #include "data.h"
 #include "entry.h"
+#include "logger-private.h"
 #include "sdmessage.pb-c.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,7 +14,7 @@ DataMessage* data_to_msg(struct data_t* dataStruct) {
   }
   DataMessage* msg = malloc(SIZE_OF_DATA_MESSAGE);
   if (msg == NULL) {
-    fprintf(stderr, "\nERR: data_to_msg: malloc failed\n");
+    logger_error_malloc_failed("data_to_msg");
     return NULL;
   }
   data_message__init(msg);
@@ -38,7 +38,7 @@ NullableString* string_to_msg(char* string) {
   }
   NullableString* msg = malloc(SIZE_OF_NULLABLE_STRING);
   if (msg == NULL) {
-    fprintf(stderr, "\nERR: string_to_msg: malloc failed\n");
+    logger_error_malloc_failed("string_to_msg");
     return NULL;
   }
   nullable_string__init(msg);
@@ -59,7 +59,7 @@ EntryMessage* entry_to_msg(struct entry_t* entry) {
   }
   EntryMessage* msg = malloc(SIZE_OF_ENTRY_MESSAGE);
   if (msg == NULL) {
-    fprintf(stderr, "\nERR: entry_to_msg: malloc failed\n");
+    logger_error_malloc_failed("entry_to_msg");
     return NULL;
   }
   entry_message__init(msg);
@@ -91,7 +91,7 @@ KeysMessage* keys_to_msg(char** keys) {
   }
   KeysMessage* msg = malloc(SIZE_OF_KEYS_MESSAGE);
   if (msg == NULL) {
-    fprintf(stderr, "\nERR: keys_to_msg: malloc failed\n");
+    logger_error_malloc_failed("keys_to_msg");
     return NULL;
   }
   keys_message__init(msg);
@@ -124,14 +124,14 @@ char** msg_to_keys(KeysMessage* msg) {
 struct message_t* message_create() {
   Message* msg = malloc(SIZE_OF_MESSAGE);
   if (msg == NULL) {
-    fprintf(stderr, "\nERR: message_create: malloc 1 failed\n");
+    logger_error_malloc_failed("message_create 1");
     return NULL;
   }
   message__init(msg);
 
   struct message_t* message = malloc(SIZE_OF_MESSAGE_T);
   if (message == NULL) {
-    fprintf(stderr, "\nERR: message_create: malloc 2 failed\n");
+    logger_error_malloc_failed("message_create 2");
     free(msg);
     return NULL;
   }

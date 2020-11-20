@@ -4,11 +4,11 @@
  *   João Vieira (45677)
  */
 
+#include "logger-private.h"
 #include "message-private.h"
 #include "sdmessage.pb-c.h"
 #include "tree.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 struct tree_t* tree;
@@ -95,7 +95,7 @@ void _invoke(Message* request, Message* response) {
   else if (request->op_code == OP_PUT && request->content_case == CT_ENTRY) {
     struct entry_t* entry = msg_to_entry(request->entry);
     if (entry == NULL) {
-      fprintf(stderr, "ERR: tree_skel#_invoke: could not convert EntryMessage to entry_t\n");
+      logger_error("tree_skel#_invoke", "Failed to convert EntryMessage to entry_t");
     } else {
       _invoke_tree_put(request, entry, response);
       entry_destroy(entry);
@@ -109,10 +109,10 @@ void _invoke(Message* request, Message* response) {
 
 int invoke(struct message_t* message) {
   if (tree == NULL) {
-    fprintf(stderr, "\nERR: tree_skel#invoke: tree_skel_init was not invoked\n");
+    logger_error("tree_skel#invoke", "tree_skel_init was not invoked");
     return -1;
   } else if (message == NULL || message->msg == NULL) {
-    fprintf(stderr, "\nERR: tree_skel#invoke: received msg is NULL\n");
+    logger_error_invalid_arg("tree_skel#invoke", "message", "NULL");
     return -1;
   }
 
@@ -120,7 +120,7 @@ int invoke(struct message_t* message) {
 
   Message* response = malloc(SIZE_OF_MESSAGE);
   if (response == NULL) {
-    fprintf(stderr, "\nERR: tree_skel#invoke: malloc failed\n");
+    logger_error_malloc_failed("tree_skel#invoke");
     return -1;
   }
 
@@ -134,8 +134,8 @@ int invoke(struct message_t* message) {
     response->op_code = OP_ERROR;
     response->content_case = CT_INT_RESULT;
     response->int_result = -1;
-    fprintf(stderr, "\nERR: tree_skel#invoke: couldnt handle op_code=%d, content_case=%d\n",
-            request->op_code, request->content_case);
+    logger_error("tree_skel#invoke", "Cannot handle op_code=%d, content_case=%d", request->op_code,
+                 request->content_case);
   }
 
   message__free_unpacked(request, NULL);
