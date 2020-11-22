@@ -151,7 +151,7 @@ int network_main_loop(int listening_socket) {
     int num_of_sockets_with_events = poll(sockets, 1 + client_sockets_count, -1);
 
     if (num_of_sockets_with_events < 0) {
-      logger_error("network_main_loop", "Poll failed");
+      logger_perror("network_main_loop", "Poll failed");
       _close_all_client_sockets(sockets);
       return -1;
     } else if (num_of_sockets_with_events == 0) {
@@ -168,6 +168,7 @@ int network_main_loop(int listening_socket) {
 }
 
 int network_server_close() {
+  logger_info("Closing server");
   tree_skel_destroy();
   return 0;
 }

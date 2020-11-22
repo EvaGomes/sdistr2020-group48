@@ -10,23 +10,11 @@
 
 #include <errno.h>
 #include <netinet/in.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #define SIZE_OF_INT sizeof(int)
-
-int ignore_SIGPIPE_signals() {
-  struct sigaction s = {};
-  s.sa_handler = SIG_IGN;
-
-  int result = sigaction(SIGPIPE, &s, NULL);
-  if (result < 0) {
-    logger_error("ignore_SIGPIPE_signals", "Failed to register handler to ignore SIGPIPE signals");
-  }
-  return result;
-}
 
 /* Reads buffer_size bytes from the socket with the given descriptor (by chunks if needed).
  *  Expected sockfd and buffer_size to be positive numbers.

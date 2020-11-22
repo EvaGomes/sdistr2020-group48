@@ -6,11 +6,6 @@
 
 #include "message-private.h"
 
-/* Registers an handler to ignore SIGPIPE signals.
- *  Returns 0 if registration went fine or -1 if it failed.
- */
-int ignore_SIGPIPE_signals();
-
 /* Reads bytes from the socket with the given descriptor and de-serializes them into a message_t.
  *  Returns the de-serialized message_t, or NULL if an error occurred.
  */

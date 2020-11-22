@@ -10,13 +10,19 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+void _handle_SIGINT_signal(int signal) {
+  logger_debug("Caught signal %d", signal);
+}
+
 int main(int argc, char** argv) {
 
-  ignore_SIGPIPE_signals();
+  signal(SIGINT, _handle_SIGINT_signal);
+  signal(SIGPIPE, SIG_IGN);
 
   if (argc != 2) {
     errno = EINVAL;
@@ -38,9 +44,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  if (network_main_loop(listening_socket) < 0) {
-    logger_error("tree_server", "Unexpected error in network_main_loop");
-  }
+  network_main_loop(listening_socket);
 
   network_server_close();
   return close(listening_socket);

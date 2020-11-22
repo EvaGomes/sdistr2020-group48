@@ -11,6 +11,7 @@
 #include "tree.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,7 +133,7 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
 
 int main(int argc, char** argv) {
 
-  ignore_SIGPIPE_signals();
+  signal(SIGPIPE, SIG_IGN);
 
   if (argc != 2) {
     errno = EINVAL;
