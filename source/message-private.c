@@ -121,13 +121,21 @@ char** msg_to_keys(KeysMessage* msg) {
   return keys;
 }
 
-struct message_t* message_create() {
+Message* Message_create() {
   Message* msg = malloc(SIZE_OF_MESSAGE);
   if (msg == NULL) {
-    logger_error_malloc_failed("message_create 1");
+    logger_error_malloc_failed("Message_create");
     return NULL;
   }
   message__init(msg);
+  return msg;
+}
+
+struct message_t* message_create() {
+  Message* msg = Message_create();
+  if (msg == NULL) {
+    return NULL;
+  }
 
   struct message_t* message = malloc(SIZE_OF_MESSAGE_T);
   if (message == NULL) {

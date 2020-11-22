@@ -54,4 +54,10 @@ char **rtree_get_keys(struct rtree_t *rtree);
  */
 void rtree_free_keys(char **keys);
 
+/* Verifies whether the operation with the given identifier was already executed.
+ *  Returns -1 if an error occurred (both with the verify operation or with the operation being
+ *  verified), 0 if the operation is still to execute, +1 if it was successfully executed.
+ */
+int rtree_verify(struct rtree_t* rtree, int op_id);
+
 #endif

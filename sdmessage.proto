@@ -15,7 +15,7 @@ message NullableString {
 }
 
 message EntryMessage {
-	NullableString key = 1;
+	    NullableString key = 1;
         DataMessage value = 2;
 }
 
@@ -43,6 +43,8 @@ message Message {
                 OP_GETKEYS = 50;
                 /* Identifies the query tree_height in a request message_t. */
                 OP_HEIGHT = 60;
+                /* Identifies the query verify in a request message_t. */
+                OP_VERIFY = 70;
                 /* Identifies a failed query/operation in a response message_t. */
                 OP_ERROR = 99;
         }
@@ -59,5 +61,7 @@ message Message {
                 EntryMessage entry = 30;
                 KeysMessage keys = 40;
                 sint32 int_result = 50;
+                /* The unique identifier of the asynchronous operation that was requested. */
+                sint32 op_id = 60;
         }
 };

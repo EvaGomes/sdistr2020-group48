@@ -24,6 +24,7 @@ struct message_t {
 #define OP_PUT MESSAGE__OPERATION_CODE__OP_PUT
 #define OP_GETKEYS MESSAGE__OPERATION_CODE__OP_GETKEYS
 #define OP_HEIGHT MESSAGE__OPERATION_CODE__OP_HEIGHT
+#define OP_VERIFY MESSAGE__OPERATION_CODE__OP_VERIFY
 #define OP_ERROR MESSAGE__OPERATION_CODE__OP_ERROR
 
 /* Aliases to entries of Message__ContentCase* */
@@ -33,6 +34,7 @@ struct message_t {
 #define CT_ENTRY MESSAGE__CONTENT_ENTRY
 #define CT_KEYS MESSAGE__CONTENT_KEYS
 #define CT_INT_RESULT MESSAGE__CONTENT_INT_RESULT
+#define CT_OP_ID MESSAGE__CONTENT_OP_ID
 
 /* sizes */
 #define SIZE_OF_DATA_MESSAGE sizeof(DataMessage)
@@ -54,6 +56,7 @@ struct entry_t* msg_to_entry(EntryMessage* msg);
 KeysMessage* keys_to_msg(char** keys);
 char** msg_to_keys (KeysMessage* msg);
 
+Message* Message_create();
 struct message_t* message_create();
 void message_destroy(struct message_t* message);
 

@@ -7,18 +7,19 @@
 #include "logger-private.h"
 #include "message-private.h"
 #include "sdmessage.pb-c.h"
+#include "tasks-private.h"
 #include "tree.h"
-
-#include <stdlib.h>
 
 struct tree_t* tree;
 
 int tree_skel_init() {
   tree = tree_create();
-  return tree == NULL ? -1 : 0;
+  int tasks_init_result = tasks_init();
+  return (tree == NULL || tasks_init_result < 0) ? -1 : 0;
 }
 
 void tree_skel_destroy() {
+  tasks_destroy();
   tree_destroy(tree);
 }
 
@@ -37,9 +38,14 @@ void _invoke_tree_height(Message* request, Message* response) {
 }
 
 void _invoke_tree_del(Message* request, Message* response) {
+  int task_id = tasks_generate_id();
+  response->op_code = request->op_code + 1;
+  response->content_case = CT_OP_ID;
+  response->op_id = task_id;
+
   int del_result = tree_del(tree, request->key);
-  response->op_code = (del_result == 0) ? (request->op_code + 1) : OP_ERROR;
-  response->content_case = CT_NONE;
+  enum TaskResult task_result = del_result < 0 ? FAILED : SUCCESSFUL;
+  tasks_set_result(task_id, task_result);
 }
 
 void _invoke_tree_get(Message* request, Message* response) {
@@ -56,9 +62,14 @@ void _invoke_tree_get(Message* request, Message* response) {
 }
 
 void _invoke_tree_put(Message* request, struct entry_t* entry, Message* response) {
+  int task_id = tasks_generate_id();
+  response->op_code = request->op_code + 1;
+  response->content_case = CT_OP_ID;
+  response->op_id = task_id;
+
   int put_result = tree_put(tree, entry->key, entry->value);
-  response->op_code = (put_result == 0) ? (request->op_code + 1) : OP_ERROR;
-  response->content_case = CT_NONE;
+  enum TaskResult task_result = put_result < 0 ? FAILED : SUCCESSFUL;
+  tasks_set_result(task_id, task_result);
 }
 
 void _invoke_tree_get_keys(Message* request, Message* response) {
@@ -72,6 +83,13 @@ void _invoke_tree_get_keys(Message* request, Message* response) {
     response->op_code = OP_ERROR;
     response->content_case = CT_NONE;
   }
+}
+
+void _invoke_verify(Message* request, Message* response) {
+  enum TaskResult task_result = tasks_get_result(request->op_id);
+  response->op_code = request->op_code + 1;
+  response->content_case = CT_INT_RESULT;
+  response->int_result = task_result;
 }
 
 void _invoke(Message* request, Message* response) {
@@ -105,6 +123,10 @@ void _invoke(Message* request, Message* response) {
   else if (request->op_code == OP_GETKEYS) {
     _invoke_tree_get_keys(request, response);
   }
+
+  else if (request->op_code == OP_VERIFY && request->content_case == CT_OP_ID) {
+    _invoke_verify(request, response);
+  }
 }
 
 int invoke(struct message_t* message) {
@@ -118,15 +140,8 @@ int invoke(struct message_t* message) {
 
   Message* request = message->msg;
 
-  Message* response = malloc(SIZE_OF_MESSAGE);
-  if (response == NULL) {
-    logger_error_malloc_failed("tree_skel#invoke");
-    return -1;
-  }
-
-  message__init(response);
+  Message* response = Message_create();
   response->op_code = OP_BAD;
-  message->msg = response;
 
   _invoke(request, response);
   if (response->op_code == OP_BAD) {
@@ -138,6 +153,7 @@ int invoke(struct message_t* message) {
                  request->content_case);
   }
 
+  message->msg = response;
   message__free_unpacked(request, NULL);
   return 0;
 }

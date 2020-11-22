@@ -168,7 +168,7 @@ int network_main_loop(int listening_socket) {
 }
 
 int network_server_close() {
-  logger_info("Closing server");
   tree_skel_destroy();
+  logger_info("Closed server\n");
   return 0;
 }

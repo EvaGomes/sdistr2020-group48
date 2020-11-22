@@ -15,6 +15,7 @@ void logger_info__sockfd(int sockfd, const char* msg);
 
 void logger_error(const char* location, const char* msg_format, ...);
 void logger_error_invalid_arg(const char* location, const char* arg_name, const char* arg_value);
+void logger_error_invalid_argi(const char* location, const char* arg_name, const int arg_value);
 void logger_error_invalid_args(const char* location);
 void logger_error_malloc_failed(const char* location);
 void logger_error__sockfd(int sockfd, const char* location, const char* msg);

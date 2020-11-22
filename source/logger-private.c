@@ -70,6 +70,10 @@ void logger_error_invalid_arg(const char* location, const char* arg_name, const 
   fprintf(stderr, "ERROR at %s: Invalid arg (%s is %s)\n", location, arg_name, arg_value);
 }
 
+void logger_error_invalid_argi(const char* location, const char* arg_name, const int arg_value) {
+  fprintf(stderr, "ERROR at %s: Invalid arg (%s=%d)\n", location, arg_name, arg_value);
+}
+
 void logger_error_invalid_args(const char* location) {
   fprintf(stderr, "ERROR at %s: Invalid args\n", location);
 }

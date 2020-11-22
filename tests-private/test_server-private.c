@@ -1,4 +1,5 @@
 #include "message-private.h"
+#include "tasks-private.h"
 #include "tree_skel.h"
 
 #include <assert.h>
@@ -29,6 +30,44 @@ void _assertUnknownMessage(Message__OperationCode op_code, Message__ContentCase 
   assert(invoke(message) == 0);
   assertMessageHasIntResult(message, OP_ERROR, -1);
   message_destroy(message);
+}
+
+// **************************************************************
+// tasks-private.c
+// **************************************************************
+
+void test__tasks() {
+  printTestIntro("tasks-private.c", "normal flow");
+
+  assert(tasks_init() >= 0);
+
+  int task_id_0 = tasks_generate_id();
+  assert(tasks_set_result(task_id_0, NOT_EXECUTED) < 0); // invalid argument
+  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
+
+  int task_id_1 = tasks_generate_id();
+  assert(tasks_set_result(task_id_1, SUCCESSFUL) >= 0);
+  assert(tasks_get_result(task_id_1) == SUCCESSFUL);
+  int task_id_2 = tasks_generate_id();
+  assert(tasks_set_result(task_id_2, FAILED) >= 0);
+  assert(tasks_get_result(task_id_2) == FAILED);
+
+  // setting result of task_id_0 out of order, gets rejected
+  assert(tasks_set_result(task_id_0, SUCCESSFUL) < 0);
+  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
+
+  int task_id_3 = tasks_generate_id();
+  assert(tasks_set_result(task_id_3, SUCCESSFUL) >= 0);
+
+  // should be able to retrieve same result several times
+  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
+  assert(tasks_get_result(task_id_1) == SUCCESSFUL);
+  assert(tasks_get_result(task_id_2) == FAILED);
+  assert(tasks_get_result(task_id_3) == SUCCESSFUL);
+
+  tasks_destroy();
+
+  printTestDone();
 }
 
 // **************************************************************
@@ -124,15 +163,22 @@ void _test_height(int expected_height) {
   message_destroy(message);
 }
 
-void _test_del(char* key) {
-  struct message_t* message = _message_t_create(OP_DEL, CT_KEY);
-  message->msg->key = strdup(key);
-  assert(invoke(message) == 0);
-  assertMessageHasNoContent(message, OP_DEL + 1);
-  message_destroy(message);
+void _test_del(const char* key, int expected_result) {
+  struct message_t* del_message = _message_t_create(OP_DEL, CT_KEY);
+  del_message->msg->key = strdup(key);
+  assert(invoke(del_message) == 0);
+  assertMessageHasOpId(del_message, OP_DEL + 1);
+
+  struct message_t* verify_message = _message_t_create(OP_VERIFY, CT_OP_ID);
+  verify_message->msg->op_id = del_message->msg->op_id;
+  assert(invoke(verify_message) == 0);
+  assertMessageHasIntResult(verify_message, OP_VERIFY + 1, expected_result);
+
+  message_destroy(del_message);
+  message_destroy(verify_message);
 }
 
-void _test_get(char* key, char* expected_value) {
+void _test_get(const char* key, char* expected_value) {
   struct message_t* message = _message_t_create(OP_GET, CT_KEY);
   message->msg->key = strdup(key);
   assert(invoke(message) == 0);
@@ -141,11 +187,18 @@ void _test_get(char* key, char* expected_value) {
 }
 
 void _test_put_entry(struct entry_t* entry) {
-  struct message_t* message = _message_t_create(OP_PUT, CT_ENTRY);
-  message->msg->entry = entry_to_msg(entry);
-  assert(invoke(message) == 0);
-  assertMessageHasNoContent(message, OP_PUT + 1);
-  message_destroy(message);
+  struct message_t* put_message = _message_t_create(OP_PUT, CT_ENTRY);
+  put_message->msg->entry = entry_to_msg(entry);
+  assert(invoke(put_message) == 0);
+  assertMessageHasOpId(put_message, OP_PUT + 1);
+
+  struct message_t* verify_message = _message_t_create(OP_VERIFY, CT_OP_ID);
+  verify_message->msg->op_id = put_message->msg->op_id;
+  assert(invoke(verify_message) == 0);
+  assertMessageHasIntResult(verify_message, OP_VERIFY + 1, +1);
+
+  message_destroy(put_message);
+  message_destroy(verify_message);
 }
 
 void _test_getkeys(int expected_n_keys, char** expected_keys) {
@@ -174,25 +227,12 @@ void test__tree_skel__invoke() {
   printTestIntro("tree_skel.c", "invoke normal flow");
   tree_skel_init();
 
-  struct message_t* message;
-
   // query tree
 
   _test_size(0);
   _test_height(-1);
-
-  message = _message_t_create(OP_DEL, CT_KEY);
-  message->msg->key = strdup("key1");
-  assert(invoke(message) == 0);
-  assertMessageHasNoContent(message, OP_ERROR);
-  message_destroy(message);
-
-  message = _message_t_create(OP_GET, CT_KEY);
-  message->msg->key = strdup("key1");
-  assert(invoke(message) == 0);
-  assertMessageHasValue(message, OP_GET + 1, NULL);
-  message_destroy(message);
-
+  _test_del("key1", -1);
+  _test_get("key1", NULL);
   _test_getkeys(0, NULL);
 
   // put nodes
@@ -231,10 +271,10 @@ void test__tree_skel__invoke() {
   char* all_keys[8] = {"key0", "key1", "key2", "key3", "key4", "key5", "key6", "key8"};
   _test_getkeys(8, all_keys);
 
-  _test_del("key2");
+  _test_del("key2", +1);
   _test_size(7);
   _test_height(3);
-  _test_del("key5");
+  _test_del("key5", +1);
   _test_size(6);
   _test_height(3);
   char* remaining_keys[6] = {"key0", "key1", "key3", "key4", "key6", "key8"};
@@ -254,6 +294,8 @@ void test__tree_skel__invoke() {
 // **************************************************************
 
 int main() {
+  test__tasks();
+
   test__tree_skel__invoke__tree_not_initialized();
   test__tree_skel__invoke__NULL_message_t();
   test__tree_skel__invoke__NULL_message();

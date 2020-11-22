@@ -51,6 +51,10 @@ typedef enum _Message__OperationCode {
    */
   MESSAGE__OPERATION_CODE__OP_HEIGHT = 60,
   /*
+   * Identifies the query verify in a request message_t. 
+   */
+  MESSAGE__OPERATION_CODE__OP_VERIFY = 70,
+  /*
    * Identifies a failed query/operation in a response message_t. 
    */
   MESSAGE__OPERATION_CODE__OP_ERROR = 99
@@ -107,7 +111,8 @@ typedef enum {
   MESSAGE__CONTENT_VALUE = 20,
   MESSAGE__CONTENT_ENTRY = 30,
   MESSAGE__CONTENT_KEYS = 40,
-  MESSAGE__CONTENT_INT_RESULT = 50
+  MESSAGE__CONTENT_INT_RESULT = 50,
+  MESSAGE__CONTENT_OP_ID = 60
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE__CONTENT)
 } Message__ContentCase;
 
@@ -131,6 +136,10 @@ struct  _Message
     EntryMessage *entry;
     KeysMessage *keys;
     int32_t int_result;
+    /*
+     * The unique identifier of the asynchronous operation that was requested. 
+     */
+    int32_t op_id;
   };
 };
 #define MESSAGE__INIT \

@@ -64,7 +64,7 @@ void _print_keys(char** keys) {
   }
 }
 
-void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
+void _run_command(struct rtree_t* rtree, char* command, char* arg1, char* arg2) {
 
   if (strcmp(command, "size") == 0) {
     int size = rtree_size(rtree);
@@ -85,20 +85,24 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
   }
 
   else if (strcmp(command, "del") == 0) {
-    if (key == NULL) {
+    if (arg1 == NULL) {
       printf("< Invalid args. Usage: del <key>\n");
-    } else if (rtree_del(rtree, key) < 0) {
-      printf("< Operation failed!\n");
     } else {
-      printf("< Done!\n");
+      int op_id = rtree_del(rtree, arg1);
+      if (op_id < 0) {
+        printf("< Operation failed!\n");
+      } else {
+        printf("< Operation queued with id %d.\n  (check result with command \"verify %d\")\n",
+               op_id, op_id);
+      }
     }
   }
 
   else if (strcmp(command, "get") == 0) {
-    if (key == NULL) {
+    if (arg1 == NULL) {
       printf("< Invalid args. Usage: get <key>\n");
     } else {
-      struct data_t* value = rtree_get(rtree, key);
+      struct data_t* value = rtree_get(rtree, arg1);
       if (value == NULL) {
         printf("< Query failed!\n");
       } else if (value->data == NULL) {
@@ -112,15 +116,19 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
   }
 
   else if (strcmp(command, "put") == 0) {
-    struct entry_t* entry = _entry_create_from_args(key, data);
+    struct entry_t* entry = _entry_create_from_args(arg1, arg2);
     if (entry == NULL) {
       printf("< Invalid args. Usage: put <key> <data>\n");
-    } else if (rtree_put(rtree, entry) < 0) {
-      printf("< Operation failed!\n");
-      entry_destroy(entry);
     } else {
-      printf("< Done!\n");
-      entry_destroy(entry);
+      int op_id = rtree_put(rtree, entry);
+      if (op_id < 0) {
+        printf("< Operation failed!\n");
+        entry_destroy(entry);
+      } else {
+        printf("< Operation queued with id %d.\n  (check result with command \"verify %d\")\n",
+               op_id, op_id);
+        entry_destroy(entry);
+      }
     }
   }
 
@@ -131,6 +139,21 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
     } else {
       _print_keys(keys);
       tree_free_keys(keys);
+    }
+  }
+
+  else if (strcmp(command, "verify") == 0) {
+    if (arg1 == NULL || atoi(arg1) < 0) {
+      printf("< Invalid args. Usage: verify <op_id>\n");
+    } else {
+      int op_result = rtree_verify(rtree, atoi(arg1));
+      if (op_result < 0) {
+        printf("< Operation failed!\n");
+      } else if (op_result == 0) {
+        printf("< Operation not yet executed!\n");
+      } else {
+        printf("< Operation done!\n");
+      }
     }
   }
 
@@ -172,10 +195,10 @@ int main(int argc, char** argv) {
     char* delimiter = " ";
     char* rest = NULL;
     char* command = strtok_r(input_str, delimiter, &rest);
-    char* key = strtok_r(rest, delimiter, &rest);
-    char* data = (strlen(rest) == 0) ? NULL : rest;
+    char* arg1 = strtok_r(rest, delimiter, &rest);
+    char* arg2 = (strlen(rest) == 0) ? NULL : rest;
 
-    _run_command(rtree, command, key, data);
+    _run_command(rtree, command, arg1, arg2);
 
     free(input_str);
   }

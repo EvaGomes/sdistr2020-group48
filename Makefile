@@ -42,7 +42,7 @@ $(EXECS_DIR)/tree_client: $(LIBS_DIR)/client-lib.o \
 $(EXECS_DIR)/tree_server: $(OBJS_DIR)/logger-private.o \
 						  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
                           $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
-                          $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
+                          $(OBJS_DIR)/$(SERVER_SUBDIR)/tasks-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
                           $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
 						  $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_server.o
 $(EXECS): $:
@@ -93,7 +93,7 @@ linkPrivateTests: $(TESTS_EXECS)
 $(TESTS_DIR)/test_server-private.exe: $(OBJS_DIR)/logger-private.o \
 							 		  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
 									  $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
-									  $(OBJS_DIR)/server/tree_skel.o \
+									  $(OBJS_DIR)/$(SERVER_SUBDIR)/tasks-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
 								      $(TESTS_DIR)/test_server-private.o
 $(TESTS_DIR)/test_all-private.exe: $(OBJS_DIR)/logger-private.o \
 							 	   $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \

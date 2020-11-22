@@ -285,7 +285,7 @@ struct tree_t* _createTreeWith7Nodes() {
 }
 
 void test__tree_with_7_nodes() {
-  printTestIntro("tree.c", "create and operate tree with 7 nodes");
+  printTestIntro("tree.c", "create and query tree with 7 nodes");
 
   struct tree_t* tree = _createTreeWith7Nodes();
 
@@ -313,7 +313,7 @@ void test__tree_with_7_nodes() {
 }
 
 void test__tree_with_NULLs() {
-  printTestIntro("tree.c", "create and operate tree with NULL keys, values and datas");
+  printTestIntro("tree.c", "create and operate tree with NULL datas");
 
   struct data_t* valueForNULLKey = data_create2(4, strdup("abc"));
   struct data_t* valueForKey0 = data_create2(0, NULL);

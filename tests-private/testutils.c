@@ -189,3 +189,9 @@ void assertMessageHasIntResult(struct message_t* actual, Message__OperationCode 
   assert(actual->msg->content_case == CT_INT_RESULT);
   assert(actual->msg->int_result == expected_int_result);
 }
+
+void assertMessageHasOpId(struct message_t* actual, Message__OperationCode expected_op_code) {
+  assert(actual->msg != NULL);
+  assert(actual->msg->op_code == expected_op_code);
+  assert(actual->msg->content_case == CT_OP_ID);
+}

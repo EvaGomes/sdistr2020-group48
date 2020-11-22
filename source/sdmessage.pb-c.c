@@ -397,7 +397,7 @@ const ProtobufCMessageDescriptor keys_message__descriptor =
   (ProtobufCMessageInit) keys_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue message__operation_code__enum_values_by_number[8] =
+static const ProtobufCEnumValue message__operation_code__enum_values_by_number[9] =
 {
   { "OP_BAD", "MESSAGE__OPERATION_CODE__OP_BAD", 0 },
   { "OP_SIZE", "MESSAGE__OPERATION_CODE__OP_SIZE", 10 },
@@ -406,21 +406,23 @@ static const ProtobufCEnumValue message__operation_code__enum_values_by_number[8
   { "OP_PUT", "MESSAGE__OPERATION_CODE__OP_PUT", 40 },
   { "OP_GETKEYS", "MESSAGE__OPERATION_CODE__OP_GETKEYS", 50 },
   { "OP_HEIGHT", "MESSAGE__OPERATION_CODE__OP_HEIGHT", 60 },
+  { "OP_VERIFY", "MESSAGE__OPERATION_CODE__OP_VERIFY", 70 },
   { "OP_ERROR", "MESSAGE__OPERATION_CODE__OP_ERROR", 99 },
 };
 static const ProtobufCIntRange message__operation_code__value_ranges[] = {
-{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{99, 7},{0, 8}
+{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{70, 7},{99, 8},{0, 9}
 };
-static const ProtobufCEnumValueIndex message__operation_code__enum_values_by_name[8] =
+static const ProtobufCEnumValueIndex message__operation_code__enum_values_by_name[9] =
 {
   { "OP_BAD", 0 },
   { "OP_DEL", 2 },
-  { "OP_ERROR", 7 },
+  { "OP_ERROR", 8 },
   { "OP_GET", 3 },
   { "OP_GETKEYS", 5 },
   { "OP_HEIGHT", 6 },
   { "OP_PUT", 4 },
   { "OP_SIZE", 1 },
+  { "OP_VERIFY", 7 },
 };
 const ProtobufCEnumDescriptor message__operation_code__descriptor =
 {
@@ -429,15 +431,15 @@ const ProtobufCEnumDescriptor message__operation_code__descriptor =
   "OperationCode",
   "Message__OperationCode",
   "",
-  8,
+  9,
   message__operation_code__enum_values_by_number,
-  8,
+  9,
   message__operation_code__enum_values_by_name,
-  8,
+  9,
   message__operation_code__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor message__field_descriptors[6] =
+static const ProtobufCFieldDescriptor message__field_descriptors[7] =
 {
   {
     "op_code",
@@ -511,6 +513,18 @@ static const ProtobufCFieldDescriptor message__field_descriptors[6] =
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "op_id",
+    60,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_SINT32,
+    offsetof(Message, content_case),
+    offsetof(Message, op_id),
+    NULL,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned message__field_indices_by_name[] = {
   3,   /* field[3] = entry */
@@ -518,9 +532,10 @@ static const unsigned message__field_indices_by_name[] = {
   1,   /* field[1] = key */
   4,   /* field[4] = keys */
   0,   /* field[0] = op_code */
+  6,   /* field[6] = op_id */
   2,   /* field[2] = value */
 };
-static const ProtobufCIntRange message__number_ranges[6 + 1] =
+static const ProtobufCIntRange message__number_ranges[7 + 1] =
 {
   { 1, 0 },
   { 10, 1 },
@@ -528,7 +543,8 @@ static const ProtobufCIntRange message__number_ranges[6 + 1] =
   { 30, 3 },
   { 40, 4 },
   { 50, 5 },
-  { 0, 6 }
+  { 60, 6 },
+  { 0, 7 }
 };
 const ProtobufCMessageDescriptor message__descriptor =
 {
@@ -538,10 +554,10 @@ const ProtobufCMessageDescriptor message__descriptor =
   "Message",
   "",
   sizeof(Message),
-  6,
+  7,
   message__field_descriptors,
   message__field_indices_by_name,
-  6,  message__number_ranges,
+  7,  message__number_ranges,
   (ProtobufCMessageInit) message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

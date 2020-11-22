@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 void _handle_SIGINT_signal(int signal) {
-  logger_debug("Caught signal %d", signal);
+  logger_debug("Caught signal %d\n", signal);
 }
 
 int main(int argc, char** argv) {

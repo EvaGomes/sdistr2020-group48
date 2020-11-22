@@ -86,11 +86,14 @@ int rtree_put(struct rtree_t* rtree, struct entry_t* entry) {
   struct message_t* response = network_send_receive(rtree, request);
   message_destroy(request);
 
-  if (response == NULL || response->msg->op_code == OP_ERROR) {
+  if (response == NULL || response->msg->op_code == OP_ERROR ||
+      response->msg->content_case != CT_OP_ID) {
+    message_destroy(response);
     return -1;
   }
+  int op_id = response->msg->op_id;
   message_destroy(response);
-  return 0;
+  return op_id;
 }
 
 struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
@@ -124,7 +127,7 @@ struct data_t* rtree_get(struct rtree_t* rtree, char* key) {
 
 int rtree_del(struct rtree_t* rtree, char* key) {
   if (key == NULL) {
-    logger_error_invalid_arg("rtree_del", "key", key);
+    logger_error_invalid_arg("rtree_del", "key", "NULL");
     return -1;
   }
 
@@ -139,15 +142,14 @@ int rtree_del(struct rtree_t* rtree, char* key) {
   struct message_t* response = network_send_receive(rtree, request);
   message_destroy(request);
 
-  if (response == NULL) {
-    return -1;
-  }
-  if (response == NULL || response->msg->op_code == OP_ERROR) {
+  if (response == NULL || response->msg->op_code == OP_ERROR ||
+      response->msg->content_case != CT_OP_ID) {
     message_destroy(response);
     return -1;
   }
+  int op_id = response->msg->op_id;
   message_destroy(response);
-  return 0;
+  return op_id;
 }
 
 int rtree_size(struct rtree_t* rtree) {
@@ -217,6 +219,28 @@ char** rtree_get_keys(struct rtree_t* rtree) {
   char** ret = msg_to_keys(response->msg->keys);
   message_destroy(response);
   return ret;
+}
+
+int rtree_verify(struct rtree_t* rtree, int op_id) {
+  struct message_t* request = message_create();
+  if (request == NULL) {
+    return -1;
+  }
+  request->msg->op_code = OP_VERIFY;
+  request->msg->content_case = CT_OP_ID;
+  request->msg->op_id = op_id;
+
+  struct message_t* response = network_send_receive(rtree, request);
+  message_destroy(request);
+
+  if (response == NULL || response->msg->op_code == OP_ERROR ||
+      response->msg->content_case != CT_INT_RESULT) {
+    message_destroy(response);
+    return -1;
+  }
+  int op_result = response->msg->int_result;
+  message_destroy(response);
+  return op_result;
 }
 
 void rtree_free_keys(char** keys) {

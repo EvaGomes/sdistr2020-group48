@@ -12,3 +12,5 @@
 - (solved) ~~Serialization of entries does not handle entries with null keys or null values.~~
 - (solved) ~~Serialization of trees does not handle entries with null keys or null values.~~
 - Does not use standard error handling ("errno" and "perror").
+- Should consider limiting the number of task-results stored (to 100, for example). We could drop
+  the results of the oldest operations (which are unlikely to be verified again).
