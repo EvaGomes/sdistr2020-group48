@@ -39,33 +39,73 @@ void _assertUnknownMessage(Message__OperationCode op_code, Message__ContentCase 
 void test__tasks() {
   printTestIntro("tasks-private.c", "normal flow");
 
+  Message* fake_op0 = Message_create();
+  fake_op0->op_code = OP_PUT;
+  Message* fake_op1 = Message_create();
+  fake_op1->op_code = OP_DEL;
+
   assert(tasks_init() >= 0);
 
-  int task_id_0 = tasks_generate_id();
-  assert(tasks_set_result(task_id_0, NOT_EXECUTED) < 0); // invalid argument
-  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
+  assert(tasks_set_result(0, SUCCESSFUL) < 0); // results are reject if no task was queued
 
-  int task_id_1 = tasks_generate_id();
-  assert(tasks_set_result(task_id_1, SUCCESSFUL) >= 0);
-  assert(tasks_get_result(task_id_1) == SUCCESSFUL);
-  int task_id_2 = tasks_generate_id();
-  assert(tasks_set_result(task_id_2, FAILED) >= 0);
-  assert(tasks_get_result(task_id_2) == FAILED);
+  tasks_add_task(fake_op0);
+  tasks_add_task(fake_op1);
+
+  struct task_t* task0 = tasks_get_next();
+  int task0_id = task0->task_id;
+  assert(task0 != NULL);
+  assert(task0_id >= 0); // has valid id
+  assertMessageEquals(task0->op_code_and_args, fake_op0); // has expected op 
+  assert(task0->op_code_and_args != fake_op0); // but it is a copy of the given one
+  assert(tasks_get_next() == task0); // returns same task until its result gets set
+
+  assert(tasks_set_result(task0_id, NOT_EXECUTED) < 0); // invalid argument
+  assert(tasks_get_result(task0_id) == NOT_EXECUTED);
+  assert(tasks_set_result(task0_id, SUCCESSFUL) >= 0);
+  assert(tasks_get_result(task0_id) == SUCCESSFUL);
+
+  struct task_t* task1 = tasks_get_next();
+  int task1_id = task1->task_id;
+  assert(task1 != NULL);
+  assert(task1_id >= task0_id);
+  assertMessageEquals(task1->op_code_and_args, fake_op1); // has expected op 
+  assert(task1->op_code_and_args != fake_op1); // but it is a copy of the given one
 
   // setting result of task_id_0 out of order, gets rejected
-  assert(tasks_set_result(task_id_0, SUCCESSFUL) < 0);
-  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
+  assert(tasks_set_result(task0_id, SUCCESSFUL) < 0);
+  
+  // setting result of task_id_1 twice fails on the second attempt
+  assert(tasks_set_result(task1_id, FAILED) >= 0);
+  assert(tasks_get_result(task1_id) == FAILED);
+  assert(tasks_set_result(task1_id, SUCCESSFUL) < 0);
+  assert(tasks_get_result(task1_id) == FAILED);
 
-  int task_id_3 = tasks_generate_id();
-  assert(tasks_set_result(task_id_3, SUCCESSFUL) >= 0);
+  assert(tasks_get_next() == NULL); // no tasks left
+  
+  assert(tasks_add_task(fake_op0) >= 0); // accepts another task, equal to the first one
+  struct task_t* task2 = tasks_get_next(); // returns that as the next task
+  int task2_id = task2->task_id;
+  assert(task2 != NULL);
+  assert(task2_id >= task1_id);
+  assertMessageEquals(task2->op_code_and_args, fake_op0);
+  assert(task2->op_code_and_args != fake_op1);
+  assert(tasks_set_result(task2_id, SUCCESSFUL) >= 0);
 
-  // should be able to retrieve same result several times
-  assert(tasks_get_result(task_id_0) == NOT_EXECUTED);
-  assert(tasks_get_result(task_id_1) == SUCCESSFUL);
-  assert(tasks_get_result(task_id_2) == FAILED);
-  assert(tasks_get_result(task_id_3) == SUCCESSFUL);
+  // should be able to retrieve same results several times
+  assert(tasks_get_result(task0_id) == SUCCESSFUL);
+  assert(tasks_get_result(task1_id) == FAILED);
+  assert(tasks_get_result(task2_id) == SUCCESSFUL);
 
-  tasks_destroy();
+  assert(tasks_get_next() == NULL); // no tasks left
+
+  assert(tasks_add_task(fake_op0) >= 0); // accepts another task, equal to the first one
+
+  tasks_destroy(); // should clear all tasks and results
+  assert(tasks_get_next() == NULL);
+  assert(tasks_get_result(task0_id) == NOT_EXECUTED);
+
+  Message_destroy(fake_op0);
+  Message_destroy(fake_op1);
 
   printTestDone();
 }

@@ -38,14 +38,16 @@ void _invoke_tree_height(Message* request, Message* response) {
 }
 
 void _invoke_tree_del(Message* request, Message* response) {
-  int task_id = tasks_generate_id();
+  tasks_add_task(request);
+
+  struct task_t* task = tasks_get_next();
   response->op_code = request->op_code + 1;
   response->content_case = CT_OP_ID;
-  response->op_id = task_id;
+  response->op_id = task->task_id;
 
   int del_result = tree_del(tree, request->key);
   enum TaskResult task_result = del_result < 0 ? FAILED : SUCCESSFUL;
-  tasks_set_result(task_id, task_result);
+  tasks_set_result(task->task_id, task_result);
 }
 
 void _invoke_tree_get(Message* request, Message* response) {
@@ -62,14 +64,16 @@ void _invoke_tree_get(Message* request, Message* response) {
 }
 
 void _invoke_tree_put(Message* request, struct entry_t* entry, Message* response) {
-  int task_id = tasks_generate_id();
+  tasks_add_task(request);
+
+  struct task_t* task = tasks_get_next();
   response->op_code = request->op_code + 1;
   response->content_case = CT_OP_ID;
-  response->op_id = task_id;
+  response->op_id = task->task_id;
 
   int put_result = tree_put(tree, entry->key, entry->value);
   enum TaskResult task_result = put_result < 0 ? FAILED : SUCCESSFUL;
-  tasks_set_result(task_id, task_result);
+  tasks_set_result(task->task_id, task_result);
 }
 
 void _invoke_tree_get_keys(Message* request, Message* response) {
