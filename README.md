@@ -22,3 +22,7 @@
 - Currently stores an unlimited number of task-results. Should consider limiting it (to 100, for
   example). We could drop the results of the oldest operations (which are unlikely to be verified
   again).
+
+- Assumes only one thread queues tasks (in case this changes, flag `last_task_id_assigned` must be
+  considered a shared resource as well and be accessed only when a lock was acquired).
+  

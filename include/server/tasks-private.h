@@ -6,6 +6,8 @@
 #ifndef _TASK_PRIVATE_H
 #define _TASK_PRIVATE_H
 
+#include "sdmessage.pb-c.h"
+
 struct task_t {
   /* A unique identifier of this task. */
   int task_id;
@@ -27,12 +29,13 @@ enum TaskResult {
 int tasks_init();
 
 /* Adds a new task to the queue of tasks.
- *  Returns 0 if the task was successfully queued, or -1 if an error occurred.
+ *  Returns the identifier of the task that was queued, or -1 if an error occurred.
  */
 int tasks_add_task(Message* op_code_and_args);
 
-/* Returns the next task_t to be executed. The task is not considered done until its result gets set
- * using function task_set_result.
+/* Returns the next task_t to be executed. This is a BLOCKING function (threads invoking this
+ * function will be blocked until there's a queued task to return). A task is not considered done
+ * until its result gets set using function task_set_result.
  */
 struct task_t* tasks_get_next();
 

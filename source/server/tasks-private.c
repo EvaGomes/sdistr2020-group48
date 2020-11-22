@@ -9,6 +9,7 @@
 #include "sdmessage.pb-c.h"
 #include "tasks-private.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 
 #define SIZE_OF_TASK sizeof(struct task_t)
@@ -42,17 +43,41 @@ int last_task_id_assigned;
  *  nodes, task_ids are increasingly higher.
  */
 struct task_queue_node_t* tasks_queue_head;
+pthread_mutex_t tasks_queue_lock;
+pthread_cond_t tasks_queue_change;
 
 /* The head of the linked-list of task-results.
  *  The head of this list contains the result with the greatest task_id and, when progressing to
  *  "previous" nodes, task_ids are decreasingly lower (results refer to older tasks).
  */
 struct task_result_list_node_t* tasks_results_list_head;
+pthread_mutex_t tasks_results_list_lock;
+pthread_cond_t tasks_results_list_change;
+
+int destroyed = 0;
 
 int tasks_init() {
   last_task_id_assigned = -1;
+
   tasks_queue_head = NULL;
+  if (pthread_mutex_init(&tasks_queue_lock, NULL) < 0) {
+    logger_perror("tasks_init", "Failed to init tasks_queue_lock");
+    return -1;
+  }
+  if (pthread_cond_init(&tasks_queue_change, NULL) < 0) {
+    logger_perror("tasks_init", "Failed to init tasks_queue_change");
+    return -1;
+  }
+
   tasks_results_list_head = NULL;
+  if (pthread_mutex_init(&tasks_results_list_lock, NULL) < 0) {
+    logger_perror("tasks_init", "Failed to init tasks_results_list_lock");
+    return -1;
+  }
+  if (pthread_cond_init(&tasks_results_list_change, NULL) < 0) {
+    logger_perror("tasks_init", "Failed to init tasks_results_list_change");
+    return -1;
+  }
   return 0;
 }
 
@@ -90,6 +115,9 @@ int tasks_add_task(Message* op_code_and_args) {
   node->task = task;
   node->next = NULL;
 
+  pthread_mutex_lock(&tasks_queue_lock);
+  logger_debug("Queueing task with task_id=%d ...\n", task->task_id);
+
   if (tasks_queue_head == NULL) {
     tasks_queue_head = node;
   } else {
@@ -100,14 +128,23 @@ int tasks_add_task(Message* op_code_and_args) {
     last_stored_task->next = node;
   }
 
-  return 0;
+  pthread_cond_broadcast(&tasks_queue_change);
+  pthread_mutex_unlock(&tasks_queue_lock);
+  return task->task_id;
 }
 
-/* Returns the next task_t to be executed. The task is not considered done until its result gets set
- * using function task_set_result.
- */
 struct task_t* tasks_get_next() {
-  return tasks_queue_head == NULL ? NULL : tasks_queue_head->task;
+  pthread_mutex_lock(&tasks_queue_lock);
+  while (destroyed == 0 && tasks_queue_head == NULL) {
+    logger_debug("Waiting for next task...\n");
+    pthread_cond_wait(&tasks_queue_change, &tasks_queue_lock);
+  }
+  if (destroyed) {
+    return NULL;
+  }
+  struct task_t* task = tasks_queue_head->task;
+  pthread_mutex_unlock(&tasks_queue_lock);
+  return task;
 }
 
 void _task_destroy(struct task_t* task) {
@@ -118,6 +155,10 @@ void _task_destroy(struct task_t* task) {
 }
 
 int tasks_set_result(int task_id, enum TaskResult task_result) {
+  pthread_mutex_lock(&tasks_queue_lock);
+  pthread_mutex_lock(&tasks_results_list_lock);
+  logger_debug("Setting the result of the task with task_id=%d...\n", task_id);
+
   if (tasks_queue_head == NULL || tasks_queue_head->task->task_id != task_id) {
     logger_error_invalid_argi("task_set_result", "task_id", task_id);
     return -1;
@@ -142,17 +183,27 @@ int tasks_set_result(int task_id, enum TaskResult task_result) {
   _task_destroy(task_node->task);
   task_node->next = NULL;
   free(task_node);
+
+  pthread_mutex_unlock(&tasks_results_list_lock);
+  pthread_mutex_unlock(&tasks_queue_lock);
   return 0;
 }
 
 enum TaskResult tasks_get_result(int task_id) {
+  pthread_mutex_lock(&tasks_results_list_lock);
+  logger_debug("Getting the result of the task with task_id=%d...\n", task_id);
+
   struct task_result_list_node_t* current_node = tasks_results_list_head;
   while (current_node != NULL && current_node->task_id >= task_id) {
     if (current_node->task_id == task_id) {
-      return current_node->task_result;
+      enum TaskResult task_result = current_node->task_result;
+      pthread_mutex_unlock(&tasks_results_list_lock);
+      return task_result;
     }
     current_node = current_node->previous;
   }
+
+  pthread_mutex_unlock(&tasks_results_list_lock);
   return NOT_EXECUTED;
 }
 
@@ -175,8 +226,16 @@ void _tasks_result_list_destroy(struct task_result_list_node_t* node) {
 
 void tasks_destroy() {
   last_task_id_assigned = -1;
+  destroyed = 1;
+
   _tasks_queue_destroy(tasks_queue_head);
   tasks_queue_head = NULL;
+  pthread_mutex_destroy(&tasks_queue_lock);
+  pthread_cond_broadcast(&tasks_queue_change);
+  pthread_cond_destroy(&tasks_queue_change);
+
   _tasks_result_list_destroy(tasks_results_list_head);
   tasks_results_list_head = NULL;
+  pthread_mutex_destroy(&tasks_results_list_lock);
+  pthread_cond_destroy(&tasks_results_list_change);
 }
