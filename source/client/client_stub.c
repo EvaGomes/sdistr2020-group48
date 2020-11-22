@@ -176,7 +176,7 @@ int rtree_size(struct rtree_t* rtree) {
 int rtree_height(struct rtree_t* rtree) {
   struct message_t* request = message_create();
   if (request == NULL) {
-    return -1;
+    return -2;
   }
   request->msg->op_code = OP_HEIGHT;
   request->msg->content_case = CT_NONE;
@@ -185,11 +185,11 @@ int rtree_height(struct rtree_t* rtree) {
   message_destroy(request);
 
   if (response == NULL) {
-    return -1;
+    return -2;
   }
   if (response->msg->op_code == OP_ERROR || response->msg->content_case != CT_INT_RESULT) {
     message_destroy(response);
-    return -1;
+    return -2;
   }
   int ret = response->msg->int_result;
   message_destroy(response);

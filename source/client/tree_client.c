@@ -68,12 +68,20 @@ void _run_command(struct rtree_t* rtree, char* command, char* key, char* data) {
 
   if (strcmp(command, "size") == 0) {
     int size = rtree_size(rtree);
-    printf("< size: %d\n", size);
+    if (size < 0) {
+        printf("< Query failed!\n");
+      } else {
+        printf("< size: %d\n", size);
+      }
   }
 
   else if (strcmp(command, "height") == 0) {
     int height = rtree_height(rtree);
-    printf("< height: %d\n", height);
+    if (height < -1) {
+        printf("< Query failed!\n");
+      } else {
+        printf("< height: %d\n", height);
+      }
   }
 
   else if (strcmp(command, "del") == 0) {
