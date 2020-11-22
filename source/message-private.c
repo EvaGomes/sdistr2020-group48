@@ -23,6 +23,21 @@ DataMessage* data_to_msg(struct data_t* dataStruct) {
   return msg;
 }
 
+DataMessage* _DataMessage_dup(DataMessage* msg) {
+  if (msg == NULL) {
+    return NULL;
+  }
+  DataMessage* copied_msg = malloc(SIZE_OF_DATA_MESSAGE);
+  if (copied_msg == NULL) {
+    logger_error_malloc_failed("_DataMessage_dup");
+    return NULL;
+  }
+  data_message__init(copied_msg);
+  copied_msg->data.len = msg->data.len;
+  copied_msg->data.data = copy(msg->data.data, msg->data.len);
+  return copied_msg;
+}
+
 struct data_t* msg_to_data(DataMessage* msg) {
   if (msg == NULL) {
     return NULL;
@@ -68,6 +83,21 @@ EntryMessage* entry_to_msg(struct entry_t* entry) {
   return msg;
 }
 
+EntryMessage* _EntryMessage_dup(EntryMessage* msg) {
+  if (msg == NULL) {
+    return NULL;
+  }
+  EntryMessage* copied_msg = malloc(SIZE_OF_ENTRY_MESSAGE);
+  if (copied_msg == NULL) {
+    logger_error_malloc_failed("_EntryMessage_dup");
+    return NULL;
+  }
+  entry_message__init(copied_msg);
+  copied_msg->key = (msg->key == NULL) ? NULL : string_to_msg(msg->key->str);
+  copied_msg->value = _DataMessage_dup(msg->value);
+  return copied_msg;
+}
+
 struct entry_t* msg_to_entry(EntryMessage* msg) {
   if (msg == NULL) {
     return NULL;
@@ -85,6 +115,18 @@ int _keys_count(char** keys) {
   return index;
 }
 
+char** _str_arr_copy(char** str_arr, int arr_len) {
+  char** copied_arr = malloc(arr_len * SIZE_OF_CHAR_POINTER);
+  if (copied_arr == NULL) {
+    logger_error_malloc_failed("_str_arr_copy");
+    return NULL;
+  }
+  for (int i = 0; i < arr_len; ++i) {
+    copied_arr[i] = strdup(str_arr[i]);
+  }
+  return copied_arr;
+}
+
 KeysMessage* keys_to_msg(char** keys) {
   if (keys == NULL) {
     return NULL;
@@ -95,17 +137,32 @@ KeysMessage* keys_to_msg(char** keys) {
     return NULL;
   }
   keys_message__init(msg);
-  int keys_count = _keys_count(keys);
-  msg->n_keys = keys_count;
-  if (keys_count == 0) {
-    return msg;
+
+  msg->n_keys = _keys_count(keys);
+  if (msg->n_keys != 0) {
+    msg->keys = _str_arr_copy(keys, msg->n_keys);
   }
 
-  msg->keys = malloc(keys_count * sizeof(char*));
-  for (int i = 0; i < keys_count; ++i) {
-    msg->keys[i] = strdup(keys[i]);
-  }
   return msg;
+}
+
+KeysMessage* _KeysMessage_dup(KeysMessage* msg) {
+  if (msg == NULL) {
+    return NULL;
+  }
+  KeysMessage* copied_msg = malloc(SIZE_OF_KEYS_MESSAGE);
+  if (copied_msg == NULL) {
+    logger_error_malloc_failed("keys_to_msg");
+    return NULL;
+  }
+  keys_message__init(copied_msg);
+
+  copied_msg->n_keys = msg->n_keys;
+  if (msg->n_keys != 0) {
+    copied_msg->keys = _str_arr_copy(msg->keys, msg->n_keys);
+  }
+
+  return copied_msg;
 }
 
 char** msg_to_keys(KeysMessage* msg) {
@@ -113,7 +170,7 @@ char** msg_to_keys(KeysMessage* msg) {
     return NULL;
   }
   int n_keys = msg->n_keys;
-  char** keys = malloc((n_keys + 1) * sizeof(char*));
+  char** keys = malloc((n_keys + 1) * SIZE_OF_CHAR_POINTER);
   for (int i = 0; i < n_keys; ++i) {
     keys[i] = strdup(msg->keys[i]);
   }
@@ -148,11 +205,57 @@ struct message_t* message_create() {
   return message;
 }
 
+Message* Message_dup(Message* msg) {
+  Message* copied_msg = Message_create();
+  if (copied_msg == NULL) {
+    return NULL;
+  }
+  copied_msg->op_code = msg->op_code;
+  copied_msg->content_case = msg->content_case;
+  switch (msg->content_case) {
+    case MESSAGE__CONTENT__NOT_SET:
+      break;
+
+    case MESSAGE__CONTENT_KEY:
+      copied_msg->key = strdup(msg->key);
+      break;
+
+    case MESSAGE__CONTENT_VALUE:
+      copied_msg->value = _DataMessage_dup(msg->value);
+      break;
+
+    case MESSAGE__CONTENT_ENTRY:
+      copied_msg->entry = _EntryMessage_dup(msg->entry);
+      break;
+
+    case MESSAGE__CONTENT_KEYS:
+      copied_msg->keys = _KeysMessage_dup(msg->keys);
+      break;
+
+    case MESSAGE__CONTENT_INT_RESULT:
+      copied_msg->int_result = msg->int_result;
+      break;
+
+    case MESSAGE__CONTENT_OP_ID:
+      copied_msg->op_id = msg->op_id;
+      break;
+
+    default:
+      logger_error("Message_dup", "Unknown content_case");
+      return NULL;
+  }
+  return copied_msg;
+}
+
+void Message_destroy(Message* msg) {
+  if (msg != NULL) {
+    message__free_unpacked(msg, NULL);
+  }
+}
+
 void message_destroy(struct message_t* message) {
   if (message != NULL) {
-    if (message->msg != NULL) {
-      message__free_unpacked(message->msg, NULL);
-    }
+    Message_destroy(message->msg);
     free(message);
   }
 }

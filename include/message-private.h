@@ -37,6 +37,7 @@ struct message_t {
 #define CT_OP_ID MESSAGE__CONTENT_OP_ID
 
 /* sizes */
+#define SIZE_OF_CHAR_POINTER sizeof(char*)
 #define SIZE_OF_DATA_MESSAGE sizeof(DataMessage)
 #define SIZE_OF_NULLABLE_STRING sizeof(NullableString)
 #define SIZE_OF_ENTRY_MESSAGE sizeof(EntryMessage)
@@ -58,6 +59,8 @@ char** msg_to_keys (KeysMessage* msg);
 
 Message* Message_create();
 struct message_t* message_create();
+Message* Message_dup(Message* message);
+void Message_destroy(Message* msg);
 void message_destroy(struct message_t* message);
 
 #endif

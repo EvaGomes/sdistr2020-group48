@@ -2,11 +2,10 @@
 #include "data.h"
 #include "entry.h"
 #include "message-private.h"
-#include "sdmessage.pb-c.h"
 #include "serialization-private.h"
 #include "serialization.h"
 #include "tree-private.h"
-#include "tree.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -519,6 +518,177 @@ void test__keys_to_msg() {
   printTestDone();
 }
 
+void test__Message_dup__CT_NONE() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_NONE");
+
+  Message* msg = Message_create();
+  msg->op_code = OP_SIZE;
+  msg->content_case = CT_NONE;
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_KEY() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_KEY");
+
+  char* key = "key";
+
+  Message* msg = Message_create();
+  msg->op_code = OP_GET;
+  msg->content_case = CT_KEY;
+  msg->key = strdup(key);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_VALUE() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_VALUE");
+
+  char* data = strdup("1234567890abc");
+  struct data_t* value = data_create2(strlen(data) + 1, data);
+
+  Message* msg = Message_create();
+  msg->op_code = OP_GET + 1;
+  msg->content_case = CT_VALUE;
+  msg->value = data_to_msg(value);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+  data_destroy(value);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_VALUE__NULL_data() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_VALUE with NULL data_t.data");
+
+  struct data_t* value = data_create2(0, NULL);
+
+  Message* msg = Message_create();
+  msg->op_code = OP_GET + 1;
+  msg->content_case = CT_VALUE;
+  msg->value = data_to_msg(value);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+  data_destroy(value);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_ENTRY() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_ENTRY");
+
+  char* key = strdup("myKey");
+  char* data = strdup("1234567890abc");
+  struct data_t* value = data_create2(strlen(data) + 1, data);
+  struct entry_t* entry = entry_create(key, value);
+
+  Message* msg = Message_create();
+  msg->op_code = OP_PUT;
+  msg->content_case = CT_ENTRY;
+  msg->entry = entry_to_msg(entry);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+  entry_destroy(entry);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_KEYS() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_KEYS");
+
+  char* keys[4] = {"key0", "key1", "key2", NULL};
+
+  Message* msg = Message_create();
+  msg->op_code = OP_GETKEYS + 1;
+  msg->content_case = CT_KEYS;
+  msg->keys = keys_to_msg(keys);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_KEYS__empty() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_KEYS empty keys");
+
+  char* keys[1] = {NULL};
+
+  Message* msg = Message_create();
+  msg->op_code = OP_GETKEYS + 1;
+  msg->content_case = CT_KEYS;
+  msg->keys = keys_to_msg(keys);
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_INT_RESULT() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_INT_RESULT");
+
+  Message* msg = Message_create();
+  msg->op_code = OP_SIZE + 1;
+  msg->content_case = CT_INT_RESULT;
+  msg->int_result = 2;
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
+void test__Message_dup__CT_OP_ID() {
+  printTestIntro("message-private.c", "Message_dup content_case=CT_OP_ID");
+
+  Message* msg = Message_create();
+  msg->op_code = OP_VERIFY;
+  msg->content_case = CT_OP_ID;
+  msg->op_id = 5;
+
+  Message* copy = Message_dup(msg);
+  assertMessageEquals(copy, msg);
+
+  Message_destroy(copy);
+  Message_destroy(msg);
+
+  printTestDone();
+}
+
 // **************************************************************
 // serialization.c
 // **************************************************************
@@ -895,7 +1065,7 @@ void test__message_serialization__CT_ENTRY() {
 }
 
 void test__message_serialization__CT_KEYS() {
-  printTestIntro("serialization.c", "message_to_buffer and buffer_to_message content_case=CT_KEY");
+  printTestIntro("serialization.c", "message_to_buffer and buffer_to_message content_case=CT_KEYS");
 
   char** keys = malloc(4 * sizeof(char*));
   keys[0] = strdup("key0");
@@ -953,6 +1123,29 @@ void test__message_serialization__CT_INT_RESULT() {
   struct message_t* message = message_create();
   message->msg->op_code = OP_SIZE + 1;
   message->msg->content_case = CT_INT_RESULT;
+  message->msg->int_result = 2;
+
+  char* buffer;
+  int buffer_size = message_to_buffer(message, &buffer);
+  struct message_t* deserialized = buffer_to_message(buffer, buffer_size);
+  assert(deserialized != NULL);
+  assertMessageEquals(deserialized->msg, message->msg);
+
+  message_destroy(deserialized);
+  free(buffer);
+  message_destroy(message);
+
+  printTestDone();
+}
+
+void test__message_serialization__CT_OP_ID() {
+  printTestIntro("serialization.c",
+                 "message_to_buffer and buffer_to_message content_case=CT_OP_ID");
+
+  struct message_t* message = message_create();
+  message->msg->op_code = OP_VERIFY;
+  message->msg->content_case = CT_OP_ID;
+  message->msg->op_id = 5;
 
   char* buffer;
   int buffer_size = message_to_buffer(message, &buffer);
@@ -1000,6 +1193,15 @@ int main() {
   test__keys_to_msg__NULL();
   test__keys_to_msg__no_keys();
   test__keys_to_msg();
+  test__Message_dup__CT_NONE();
+  test__Message_dup__CT_KEY();
+  test__Message_dup__CT_VALUE();
+  test__Message_dup__CT_VALUE__NULL_data();
+  test__Message_dup__CT_ENTRY();
+  test__Message_dup__CT_KEYS();
+  test__Message_dup__CT_KEYS__empty();
+  test__Message_dup__CT_INT_RESULT();
+  test__Message_dup__CT_OP_ID();
 
   test__data_serialization();
   test__data_serialization__NULL_data();
@@ -1018,6 +1220,7 @@ int main() {
   test__message_serialization__CT_KEYS();
   test__message_serialization__CT_KEYS__empty();
   test__message_serialization__CT_INT_RESULT();
+  test__message_serialization__CT_OP_ID();
 
   printNoAssertionsFailed();
   return 0;

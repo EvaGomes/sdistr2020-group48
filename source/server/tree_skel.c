@@ -154,6 +154,6 @@ int invoke(struct message_t* message) {
   }
 
   message->msg = response;
-  message__free_unpacked(request, NULL);
+  Message_destroy(request);
   return 0;
 }
