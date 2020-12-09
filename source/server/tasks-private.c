@@ -97,6 +97,26 @@ struct task_t* _task_create(Message* op_code_and_args) {
   return task;
 }
 
+void _tasks_queue_lock() {
+  logger_debug("Locking tasks queue...\n");
+  pthread_mutex_lock(&tasks_queue_lock);
+}
+
+void _tasks_queue_unlock() {
+  logger_debug("Unlocking tasks queue...\n");
+  pthread_mutex_unlock(&tasks_queue_lock);
+}
+
+void _tasks_results_list_lock() {
+  logger_debug("Locking tasks-results list...\n");
+  pthread_mutex_lock(&tasks_results_list_lock);
+}
+
+void _tasks_results_list_unlock() {
+  logger_debug("Unlocking tasks-results list...\n");
+  pthread_mutex_unlock(&tasks_results_list_lock);
+}
+
 int tasks_add_task(Message* op_code_and_args) {
   if (op_code_and_args == NULL) {
     logger_error_invalid_arg("Queue_add_task", "op_code_and_args", "NULL");
@@ -115,7 +135,7 @@ int tasks_add_task(Message* op_code_and_args) {
   node->task = task;
   node->next = NULL;
 
-  pthread_mutex_lock(&tasks_queue_lock);
+  _tasks_queue_lock();
   logger_debug("Queueing task with task_id=%d ...\n", task->task_id);
 
   if (tasks_queue_head == NULL) {
@@ -129,12 +149,12 @@ int tasks_add_task(Message* op_code_and_args) {
   }
 
   pthread_cond_broadcast(&tasks_queue_change);
-  pthread_mutex_unlock(&tasks_queue_lock);
+  _tasks_queue_unlock();
   return task->task_id;
 }
 
 struct task_t* tasks_get_next() {
-  pthread_mutex_lock(&tasks_queue_lock);
+  _tasks_queue_lock();
   while (destroyed == 0 && tasks_queue_head == NULL) {
     logger_debug("Waiting for next task...\n");
     pthread_cond_wait(&tasks_queue_change, &tasks_queue_lock);
@@ -143,7 +163,7 @@ struct task_t* tasks_get_next() {
     return NULL;
   }
   struct task_t* task = tasks_queue_head->task;
-  pthread_mutex_unlock(&tasks_queue_lock);
+  _tasks_queue_unlock();
   return task;
 }
 
@@ -155,22 +175,28 @@ void _task_destroy(struct task_t* task) {
 }
 
 int tasks_set_result(int task_id, enum TaskResult task_result) {
-  pthread_mutex_lock(&tasks_queue_lock);
-  pthread_mutex_lock(&tasks_results_list_lock);
+  _tasks_queue_lock();
+  _tasks_results_list_lock();
   logger_debug("Setting the result of the task with task_id=%d...\n", task_id);
 
   if (tasks_queue_head == NULL || tasks_queue_head->task->task_id != task_id) {
     logger_error_invalid_argi("task_set_result", "task_id", task_id);
+    _tasks_results_list_unlock();
+    _tasks_queue_unlock();
     return -1;
   }
   if (task_result == NOT_EXECUTED) {
     logger_error_invalid_arg("task_set_result", "task_result", "NOT_EXECUTED");
+    _tasks_results_list_unlock();
+    _tasks_queue_unlock();
     return -1;
   }
 
   struct task_result_list_node_t* result_node = malloc(SIZE_OF_RESULT_NODE);
   if (result_node == NULL) {
     logger_error_malloc_failed("task_set_result");
+    _tasks_results_list_unlock();
+    _tasks_queue_unlock();
     return -1;
   }
   result_node->task_id = task_id;
@@ -184,26 +210,26 @@ int tasks_set_result(int task_id, enum TaskResult task_result) {
   task_node->next = NULL;
   free(task_node);
 
-  pthread_mutex_unlock(&tasks_results_list_lock);
-  pthread_mutex_unlock(&tasks_queue_lock);
+  _tasks_results_list_unlock();
+  _tasks_queue_unlock();
   return 0;
 }
 
 enum TaskResult tasks_get_result(int task_id) {
-  pthread_mutex_lock(&tasks_results_list_lock);
+  _tasks_results_list_lock();
   logger_debug("Getting the result of the task with task_id=%d...\n", task_id);
 
   struct task_result_list_node_t* current_node = tasks_results_list_head;
   while (current_node != NULL && current_node->task_id >= task_id) {
     if (current_node->task_id == task_id) {
       enum TaskResult task_result = current_node->task_result;
-      pthread_mutex_unlock(&tasks_results_list_lock);
+      _tasks_results_list_unlock();
       return task_result;
     }
     current_node = current_node->previous;
   }
 
-  pthread_mutex_unlock(&tasks_results_list_lock);
+  _tasks_results_list_unlock();
   return NOT_EXECUTED;
 }
 
