@@ -83,11 +83,7 @@ void _close_all_client_sockets(struct pollfd* sockets) {
 void _handle_listening_socket_events(struct pollfd* sockets, int* client_sockets_count) {
   struct pollfd listening_socket = sockets[0];
   if ((listening_socket.revents & POLLIN) && (*client_sockets_count < MAX_CLIENT_SOCKETS)) {
-    // find first available index
-    int i = 1;
-    while (sockets[i].fd != -1) {
-      i += 1;
-    }
+    int i = *client_sockets_count + 1;
     // try to accept new connection and set it at index i
     struct sockaddr client;
     socklen_t size_client = SIZE_OF_SOCKADDR;
@@ -124,17 +120,45 @@ int _handle_client_socket_pollin_event(int client_socket) {
 
 /* Handles the events in the given client sockets. */
 void _handle_client_sockets_events(struct pollfd* sockets, int* client_sockets_count) {
+  int some_fds_closed = 0;
+
   for (int i = 1; i <= *client_sockets_count; ++i) {
-    struct pollfd client_socket = sockets[i];
-    if (client_socket.revents & POLLIN) {
-      int handler_result = _handle_client_socket_pollin_event(client_socket.fd);
+    int client_socket_fd = sockets[i].fd;
+    if (client_socket_fd >= 0 && sockets[i].revents & POLLIN) {
+      int handler_result = _handle_client_socket_pollin_event(client_socket_fd);
       if (handler_result < 0) {
-        close(client_socket.fd);
-        logger_info__sockfd(client_socket.fd, "Closed client connection");
-        client_socket.fd = -1;
-        *client_sockets_count -= 1;
+        close(client_socket_fd);
+        logger_info__sockfd(client_socket_fd, "Closed client connection");
+        sockets[i].fd = -1;
+
+        some_fds_closed = 1;
       }
     }
+  }
+
+  if (some_fds_closed) {
+    // move pollfds that were closed to the end of the array (because poll does not notify about
+    // revents of pollfds that are after those with fd -1)
+
+    int index_of_last_connected = MAX_CLIENT_SOCKETS;
+    for (int i = MAX_CLIENT_SOCKETS; i >= 1; --i) {
+      if (sockets[i].fd != -1) {
+        index_of_last_connected = i;
+        break;
+      }
+    }
+    for (int i = index_of_last_connected - 1; i >= 1; --i) {
+      if (sockets[i].fd == -1) {
+        struct pollfd socket_to_move = sockets[i];
+        for (int j = i + 1; j <= index_of_last_connected; ++j) {
+          sockets[j - 1] = sockets[j];
+        }
+        sockets[index_of_last_connected] = socket_to_move;
+        index_of_last_connected -= 1;
+      }
+    }
+
+    *client_sockets_count = index_of_last_connected;
   }
 }
 
@@ -142,8 +166,11 @@ int network_main_loop(int listening_socket) {
   struct pollfd sockets[1 + MAX_CLIENT_SOCKETS];
   sockets[0].fd = listening_socket;
   sockets[0].events = POLLIN;
+  sockets[0].revents = 0;
   for (int i = 1; i <= MAX_CLIENT_SOCKETS; i++) {
     sockets[i].fd = -1;
+    sockets[i].events = POLLIN;
+    sockets[i].revents = 0;
   }
   int client_sockets_count = 0;
 
