@@ -1,3 +1,4 @@
+#include "logger-private.h"
 #include "message-private.h"
 #include "tasks-private.h"
 #include "tree_skel.h"
@@ -6,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "./testutils.c"
 
@@ -54,9 +56,9 @@ void test__tasks() {
   struct task_t* task0 = tasks_get_next();
   int task0_id = task0->task_id;
   assert(task0 != NULL);
-  assert(task0_id >= 0); // has valid id
-  assertMessageEquals(task0->op_code_and_args, fake_op0); // has expected op 
-  assert(task0->op_code_and_args != fake_op0); // but it is a copy of the given one
+  assert(task0_id >= 0);                                  // has valid id
+  assertMessageEquals(task0->op_code_and_args, fake_op0); // has expected op
+  assert(task0->op_code_and_args != fake_op0);            // but it is a copy of the given one
   assert(tasks_get_next() == task0); // returns same task until its result gets set
 
   assert(tasks_set_result(task0_id, NOT_EXECUTED) < 0); // invalid argument
@@ -68,21 +70,21 @@ void test__tasks() {
   int task1_id = task1->task_id;
   assert(task1 != NULL);
   assert(task1_id >= task0_id);
-  assertMessageEquals(task1->op_code_and_args, fake_op1); // has expected op 
-  assert(task1->op_code_and_args != fake_op1); // but it is a copy of the given one
+  assertMessageEquals(task1->op_code_and_args, fake_op1); // has expected op
+  assert(task1->op_code_and_args != fake_op1);            // but it is a copy of the given one
 
   // setting result of task_id_0 out of order, gets rejected
   assert(tasks_set_result(task0_id, SUCCESSFUL) < 0);
-  
+
   // setting result of task_id_1 twice fails on the second attempt
   assert(tasks_set_result(task1_id, FAILED) >= 0);
   assert(tasks_get_result(task1_id) == FAILED);
   assert(tasks_set_result(task1_id, SUCCESSFUL) < 0);
   assert(tasks_get_result(task1_id) == FAILED);
 
-  assert(tasks_get_next() == NULL); // no tasks left
-  
-  assert(tasks_add_task(fake_op0) >= 0); // accepts another task, equal to the first one
+  // assert(tasks_get_next() == NULL); // no tasks left, would be blocked waiting for next task
+
+  assert(tasks_add_task(fake_op0) >= 0);   // accepts another task, equal to the first one
   struct task_t* task2 = tasks_get_next(); // returns that as the next task
   int task2_id = task2->task_id;
   assert(task2 != NULL);
@@ -96,7 +98,7 @@ void test__tasks() {
   assert(tasks_get_result(task1_id) == FAILED);
   assert(tasks_get_result(task2_id) == SUCCESSFUL);
 
-  assert(tasks_get_next() == NULL); // no tasks left
+  // assert(tasks_get_next() == NULL); // no tasks left, would be blocked waiting for next task
 
   assert(tasks_add_task(fake_op0) >= 0); // accepts another task, equal to the first one
 
@@ -134,7 +136,7 @@ void test__tree_skel__invoke__NULL_message_t() {
   printTestDone();
 }
 
-void test__tree_skel__invoke__NULL_message() {
+void test__tree_skel__invoke__NULL_Message() {
   printTestIntro("tree_skel.c", "invoke fails if Message is NULL");
   tree_skel_init();
 
@@ -209,10 +211,25 @@ void _test_del(const char* key, int expected_result) {
   assert(invoke(del_message) == 0);
   assertMessageHasOpId(del_message, OP_DEL + 1);
 
-  struct message_t* verify_message = _message_t_create(OP_VERIFY, CT_OP_ID);
-  verify_message->msg->op_id = del_message->msg->op_id;
-  assert(invoke(verify_message) == 0);
-  assertMessageHasIntResult(verify_message, OP_VERIFY + 1, expected_result);
+  struct message_t* verify_message = message_create();
+  for (int i = 0; i < 10; ++i) {
+    verify_message->msg->op_code = OP_VERIFY;
+    verify_message->msg->content_case = CT_OP_ID;
+    verify_message->msg->op_id = del_message->msg->op_id;
+    assert(invoke(verify_message) == 0);
+
+    assert(verify_message->msg != NULL);
+    assert(verify_message->msg->op_code == OP_VERIFY + 1);
+    if (verify_message->msg->int_result == expected_result) {
+      break;
+    } else {
+      logger_debug(
+          "(attempt#%d) del verify_message->msg->int_result is still %d, trying again...\n", i,
+          verify_message->msg->int_result);
+      sleep(3);
+    }
+  }
+  assert(verify_message->msg->int_result == expected_result);
 
   message_destroy(del_message);
   message_destroy(verify_message);
@@ -232,10 +249,25 @@ void _test_put_entry(struct entry_t* entry) {
   assert(invoke(put_message) == 0);
   assertMessageHasOpId(put_message, OP_PUT + 1);
 
-  struct message_t* verify_message = _message_t_create(OP_VERIFY, CT_OP_ID);
-  verify_message->msg->op_id = put_message->msg->op_id;
-  assert(invoke(verify_message) == 0);
-  assertMessageHasIntResult(verify_message, OP_VERIFY + 1, +1);
+  struct message_t* verify_message = message_create();
+  for (int i = 0; i < 10; ++i) {
+    verify_message->msg->op_code = OP_VERIFY;
+    verify_message->msg->content_case = CT_OP_ID;
+    verify_message->msg->op_id = put_message->msg->op_id;
+    assert(invoke(verify_message) == 0);
+    assert(verify_message->msg != NULL);
+    assert(verify_message->msg->op_code == OP_VERIFY + 1);
+    assert(verify_message->msg->content_case == CT_INT_RESULT);
+    if (verify_message->msg->int_result == +1) {
+      break;
+    } else {
+      logger_debug(
+          "(attempt#%d) put verify_message->msg->int_result is still %d, trying again...\n", i,
+          verify_message->msg->int_result);
+      sleep(3);
+    }
+  }
+  assert(verify_message->msg->int_result == +1);
 
   message_destroy(put_message);
   message_destroy(verify_message);
@@ -338,7 +370,7 @@ int main() {
 
   test__tree_skel__invoke__tree_not_initialized();
   test__tree_skel__invoke__NULL_message_t();
-  test__tree_skel__invoke__NULL_message();
+  test__tree_skel__invoke__NULL_Message();
   test__tree_skel__invoke__unknown_message();
   test__tree_skel__invoke();
 

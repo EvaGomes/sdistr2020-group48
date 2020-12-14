@@ -115,7 +115,7 @@ void* process_tasks(void* params) {
   }
 
   while (1) {
-    struct task_t* task = tasks_get_next();
+    struct task_t* task = tasks_get_next(); // blocking function
     if (task == NULL) {
       return NULL;
     }
@@ -157,7 +157,7 @@ int tree_skel_init() {
     return -1;
   }
   if (pthread_mutex_init(&tree_lock, NULL) < 0) {
-    logger_perror("tasks_init", "Failed to init tree_lock");
+    logger_perror("tree_skel_init", "Failed to init tree_lock");
     return -1;
   }
 

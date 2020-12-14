@@ -58,6 +58,7 @@ int destroyed = 0;
 
 int tasks_init() {
   last_task_id_assigned = -1;
+  destroyed = 0;
 
   tasks_queue_head = NULL;
   if (pthread_mutex_init(&tasks_queue_lock, NULL) < 0) {
