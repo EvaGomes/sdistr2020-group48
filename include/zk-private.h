@@ -27,7 +27,11 @@ char* zk_get_primary_tree_server();
 /* Returns the "<ip-address>:<port>" of the backup tree_server, or NULL if it isn't registered. */
 char* zk_get_backup_tree_server();
 
+typedef void (*servers_listener_fn)(void* context);
+/* Registers a function to be notified if the registered servers change. */
+void zk_register_servers_listener(servers_listener_fn listener, void* context);
+
 /* Closes the connection to Zookeeper and frees-up its resources. */
-int zk_close();
+void zk_close();
 
 #endif

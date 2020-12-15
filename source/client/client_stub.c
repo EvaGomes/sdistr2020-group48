@@ -81,6 +81,13 @@ int servers_retry_connect(struct rtree_t* rtree) {
   return 0;
 }
 
+static void on_servers_changed(void* listener_context) {
+  logger_debug("Function 'on_servers_changed' was invoked\n");
+  struct rtree_t* rtree = (struct rtree_t*) listener_context;
+  network_close(rtree);
+  are_servers_connected = 0;
+}
+
 struct rtree_t* rtree_connect(const char* address_port) {
   if (address_port == NULL) {
     logger_error_invalid_arg("rtree_connect", "address_port", address_port);
@@ -99,6 +106,7 @@ struct rtree_t* rtree_connect(const char* address_port) {
 
   servers_retry_connect(rtree);
 
+  zk_register_servers_listener(on_servers_changed, rtree);
   return rtree;
 }
 

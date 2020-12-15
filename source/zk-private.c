@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
+#include <zk-private.h>
 #include <zookeeper/zookeeper.h>
 
 static zhandle_t* zh;
@@ -19,6 +20,9 @@ static const char* ROOT_ZNODE_PATH = "/kvstore";
 static const char* PRIMARY_TREE_SERVER_ZNODE_PATH = "/kvstore/primary";
 static const char* BACKUP_TREE_SERVER_ZNODE_PATH = "/kvstore/backup";
 static const int SERVER_ADDRESS_AND_PORT_MAX_LEN = 16 + 1 + 5;
+
+servers_listener_fn servers_listener = NULL;
+void* servers_listener_context = NULL;
 
 /* Watcher function for connection state change events. */
 static void zk_connection_watcher(zhandle_t* zzh, int type, int state, const char* path,
@@ -38,6 +42,20 @@ static ZOOAPI int zk_exists(const char* path) {
 static ZOOAPI int zk_create(const char* path, const char* value, int mode) {
   int valuelen = (value == NULL) ? -1 : (int) strlen(value);
   return zoo_create(zh, path, value, valuelen, &ZOO_OPEN_ACL_UNSAFE, mode, NULL, 0);
+}
+
+static void zk_children_watcher(zhandle_t* zzh, int type, int state, const char* path,
+                                void* context) {
+  struct String_vector* children = malloc(sizeof(struct String_vector));
+  if (type == ZOO_CHILD_EVENT && state == ZOO_CONNECTED_STATE) {
+    if (ZOK != zoo_wget_children(zh, ROOT_ZNODE_PATH, zk_children_watcher, context, children)) {
+      logger_error("zk_children_watcher", "Failed to set children watcher");
+    }
+    if (servers_listener != NULL) {
+      servers_listener(servers_listener_context);
+    }
+  }
+  free(children);
 }
 
 int zk_connect(const char* zookeeper_address_and_port) {
@@ -70,6 +88,14 @@ int zk_connect(const char* zookeeper_address_and_port) {
       return -1;
     }
   }
+
+  // register root's children listener
+  struct String_vector* children = malloc(sizeof(struct String_vector));
+  if (ZOK != zoo_wget_children(zh, ROOT_ZNODE_PATH, zk_children_watcher, "", children)) {
+    logger_error("zk_children_watcher", "Failed to set children watcher");
+  }
+  free(children);
+
   return 0;
 }
 
@@ -150,6 +176,13 @@ char* zk_get_backup_tree_server() {
   return copy;
 }
 
+void zk_register_servers_listener(servers_listener_fn listener, void* context) {
+  servers_listener = listener;
+  servers_listener_context = context;
+}
+
 void zk_close() {
+  servers_listener_context = NULL;
+  servers_listener = NULL;
   zookeeper_close(zh);
 }
