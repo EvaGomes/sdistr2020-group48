@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  int serverPort = htons(atoi(argv[1]));
+  int serverPort = atoi(argv[1]);
   char* zookeeper_address_and_port = argv[2];
 
   if (zk_connect(zookeeper_address_and_port) < 0) {
@@ -57,6 +57,12 @@ int main(int argc, char** argv) {
   }
   int listening_socket = network_server_init(serverPort);
   if (listening_socket < 0) {
+    zk_close();
+    return -1;
+  }
+  if (zk_register_tree_server(listening_socket) < 0) {
+    close(listening_socket);
+    network_server_close();
     zk_close();
     return -1;
   }

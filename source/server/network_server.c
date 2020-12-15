@@ -9,6 +9,7 @@
 #include "message-private.h"
 #include "tree_skel.h"
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <string.h>
@@ -33,7 +34,6 @@ int network_server_init(short port) {
     logger_perror("network_server_init", "Failed to allow reuse of local addresses");
   }
 
-
   struct in_addr* ip_address = get_host();
   if (ip_address == NULL) {
     logger_perror("network_server_init", "Failed to get host");
@@ -43,7 +43,7 @@ int network_server_init(short port) {
 
   struct sockaddr_in server;
   server.sin_family = AF_INET;
-  server.sin_port = port;
+  server.sin_port = htons(port);
   server.sin_addr = *ip_address;
 
   if (bind(listening_socket, (struct sockaddr*) &server, sizeof(server)) < 0) {
@@ -64,7 +64,8 @@ int network_server_init(short port) {
     return -1;
   }
 
-  logger_info("\nServer is ready...\n");
+  char s[1024];
+  logger_info("\nServer is ready at %s:%d...\n", inet_ntop(AF_INET, ip_address, s, 1024), port);
   return listening_socket;
 }
 
