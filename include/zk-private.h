@@ -11,7 +11,7 @@
 /* Connects to the zookeeper server at the given IP address and port and, in case it isn't created
  * yet, creates the root ZNode (with content "/kvstore").
  */
-int zk_connect(char* zookeeper_address_and_port);
+int zk_connect(const char* zookeeper_address_and_port);
 
 /* Registers the tree_server that is listening in the given socket in the Zookeeper server. If no
  * primary server is registered yet, sets the tree_server as the primary server and returns
@@ -21,6 +21,11 @@ int zk_connect(char* zookeeper_address_and_port);
  *  Returns the ServerRole given to the tree_server, or NONE if an error occurred.
  */
 enum ServerRole zk_register_tree_server(int server_listening_socket_fd);
+
+/* Returns the "<ip-address>:<port>" of the primary tree_server, or NULL if it isn't registered. */
+char* zk_get_primary_tree_server();
+/* Returns the "<ip-address>:<port>" of the backup tree_server, or NULL if it isn't registered. */
+char* zk_get_backup_tree_server();
 
 /* Closes the connection to Zookeeper and frees-up its resources. */
 int zk_close();

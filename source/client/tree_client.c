@@ -69,19 +69,19 @@ void _run_command(struct rtree_t* rtree, char* command, char* arg1, char* arg2) 
   if (strcmp(command, "size") == 0) {
     int size = rtree_size(rtree);
     if (size < 0) {
-        printf("< Query failed!\n");
-      } else {
-        printf("< size: %d\n", size);
-      }
+      printf("< Query failed!\n");
+    } else {
+      printf("< size: %d\n", size);
+    }
   }
 
   else if (strcmp(command, "height") == 0) {
     int height = rtree_height(rtree);
     if (height < -1) {
-        printf("< Query failed!\n");
-      } else {
-        printf("< height: %d\n", height);
-      }
+      printf("< Query failed!\n");
+    } else {
+      printf("< height: %d\n", height);
+    }
   }
 
   else if (strcmp(command, "del") == 0) {
@@ -169,8 +169,8 @@ int main(int argc, char** argv) {
   if (argc != 2) {
     errno = EINVAL;
     fprintf(stderr, "Invalid number of arguments\n");
-    printf("Usage: ./tree_client <server-ip>:<server-port>\n");
-    printf(" E.g.: ./tree_client 127.0.0.1:9000\n");
+    printf("Usage: ./tree_client <zookeeper-ip>:<zookeeper-port>\n");
+    printf(" E.g.: ./tree_client 127.0.0.1:2181\n");
     return -1;
   }
 
@@ -180,16 +180,31 @@ int main(int argc, char** argv) {
   }
 
   while (1) {
+    if (rtree_are_servers_connected() == 0) {
+      printf("< Server not available.\n  Please, retry connecting with command \"retry\".\n");
+    }
 
     char* input_str = _collect_input();
     if (input_str == NULL) {
-      printf("< Failed to read the command. Please, try again.");
+      printf("< Failed to read the command. Please, try again.\n");
       continue;
     }
 
     if (strcmp(input_str, "quit") == 0) {
       free(input_str);
       break;
+    }
+    if (strcmp(input_str, "retry") == 0) {
+      if (rtree_are_servers_connected()) {
+        printf("< Server already connected\n");
+      } else {
+        servers_retry_connect(rtree);
+      }
+      free(input_str);
+      continue;
+    }
+    if (rtree_are_servers_connected() == 0) {
+      continue;
     }
 
     char* delimiter = " ";

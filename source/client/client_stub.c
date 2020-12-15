@@ -10,17 +10,75 @@
 #include "logger-private.h"
 #include "message-private.h"
 #include "network_client.h"
+#include "zk-private.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #define SIZE_OF_RTREE sizeof(struct rtree_t)
 
+static int are_servers_connected = 0;
+
 void _rtree_destroy(struct rtree_t* rtree) {
   if (rtree != NULL) {
-    free(rtree->server_ip_address);
+    free(rtree->primary_server_ip_address);
+    free(rtree->backup_server_ip_address);
     free(rtree);
   }
+}
+
+/* Parses the address_port string, sets pointer_to_address to the parsed IP address and sets
+ * pointer_to_port to the parsed address and port.
+ *  Expects address_port to have format "<address>:<port>", where <port> is a positive number.
+ *  Returns 0 if the string was parsed correctly, or -1 if some error occurred.
+ */
+static int parse_address_port(char* address_port, char** pointer_to_address, int* pointer_to_port) {
+  if (address_port == NULL) {
+    logger_error_invalid_arg("parse_address_port", "address_port", "NULL");
+    return -1;
+  }
+
+  char address_and_port[strlen(address_port)];
+  strcpy(address_and_port, address_port);
+
+  char* delimiter = ":";
+  char* ip_address = strtok(address_and_port, delimiter);
+  char* port_str = strtok(NULL, delimiter);
+
+  if (port_str == NULL) {
+    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
+    return -1;
+  }
+  int port = atoi(port_str);
+  if (port == 0) {
+    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
+    return -1;
+  }
+
+  *pointer_to_address = strdup(ip_address);
+  *pointer_to_port = port;
+  return 0;
+}
+
+int servers_retry_connect(struct rtree_t* rtree) {
+  char* primary_address_port = zk_get_primary_tree_server();
+  char* backup_address_port = zk_get_backup_tree_server();
+
+  if ((primary_address_port == NULL) || (backup_address_port == NULL) ||
+      parse_address_port(primary_address_port, &(rtree->primary_server_ip_address),
+                         &(rtree->primary_server_port)) < 0 ||
+      parse_address_port(backup_address_port, &(rtree->backup_server_ip_address),
+                         &(rtree->backup_server_port)) < 0 ||
+      network_connect(rtree) < 0) {
+    free(primary_address_port);
+    free(backup_address_port);
+    return -1;
+  }
+
+  free(primary_address_port);
+  free(backup_address_port);
+  are_servers_connected = 1;
+  return 0;
 }
 
 struct rtree_t* rtree_connect(const char* address_port) {
@@ -28,22 +86,8 @@ struct rtree_t* rtree_connect(const char* address_port) {
     logger_error_invalid_arg("rtree_connect", "address_port", address_port);
     return NULL;
   }
-
-  // remove const to prevent -Wdiscarded-qualifiers in strtok
-  char address_and_port[strlen(address_port)];
-  strcpy(address_and_port, address_port);
-
-  char* delimiter = ":";
-  char* ip_adress = strtok(address_and_port, delimiter);
-  char* port_str = strtok(NULL, delimiter);
-
-  if (port_str == NULL) {
-    logger_error_invalid_arg("rtree_connect", "address_port", address_port);
-    return NULL;
-  }
-  int port = atoi(port_str);
-  if (port == 0) {
-    logger_error_invalid_arg("rtree_connect", "address_port", address_port);
+  if (zk_connect(address_port) < 0) {
+    zk_close();
     return NULL;
   }
 
@@ -52,19 +96,20 @@ struct rtree_t* rtree_connect(const char* address_port) {
     logger_error_malloc_failed("rtree_connect");
     return NULL;
   }
-  rtree->server_ip_address = strdup(ip_adress);
-  rtree->server_port = port;
 
-  if (network_connect(rtree) < 0) {
-    _rtree_destroy(rtree);
-    return NULL;
-  }
+  servers_retry_connect(rtree);
 
   return rtree;
 }
 
+int rtree_are_servers_connected() {
+  return are_servers_connected;
+}
+
 int rtree_disconnect(struct rtree_t* rtree) {
   int close_result = network_close(rtree);
+  are_servers_connected = 0;
+  zk_close();
   _rtree_destroy(rtree);
   return (close_result < 0) ? -1 : 0;
 }

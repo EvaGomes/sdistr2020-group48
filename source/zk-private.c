@@ -18,6 +18,7 @@ static int is_connected;
 static const char* ROOT_ZNODE_PATH = "/kvstore";
 static const char* PRIMARY_TREE_SERVER_ZNODE_PATH = "/kvstore/primary";
 static const char* BACKUP_TREE_SERVER_ZNODE_PATH = "/kvstore/backup";
+static const int SERVER_ADDRESS_AND_PORT_MAX_LEN = 16 + 1 + 5;
 
 /* Watcher function for connection state change events. */
 static void zk_connection_watcher(zhandle_t* zzh, int type, int state, const char* path,
@@ -39,7 +40,7 @@ static ZOOAPI int zk_create(const char* path, const char* value, int mode) {
   return zoo_create(zh, path, value, valuelen, &ZOO_OPEN_ACL_UNSAFE, mode, NULL, 0);
 }
 
-int zk_connect(char* zookeeper_address_and_port) {
+int zk_connect(const char* zookeeper_address_and_port) {
   zh = zookeeper_init(zookeeper_address_and_port, zk_connection_watcher, 2000, 0, 0, 0);
   if (zh == NULL) {
     logger_perror("zk_connect", "Failed to connect to ZooKeeper server!");
@@ -84,7 +85,7 @@ enum ServerRole zk_register_tree_server(int server_listening_socket_fd) {
   }
   char* server_ip_address = inet_ntoa(server_sa.sin_addr);
   int server_port = (int) ntohs(server_sa.sin_port);
-  char server_address_and_port[16 + 1 + 5];
+  char server_address_and_port[SERVER_ADDRESS_AND_PORT_MAX_LEN];
   sprintf(server_address_and_port, "%s:%d", server_ip_address, server_port);
 
   // create appropriate znode
@@ -113,6 +114,40 @@ enum ServerRole zk_register_tree_server(int server_listening_socket_fd) {
                "Failed to register %s, primary and backup tree_servers are already set",
                server_address_and_port);
   return NONE;
+}
+
+/* Returns the "<ip-address>:<port>" of the primary tree_server, or NULL if it isn't registered. */
+char* zk_get_primary_tree_server() {
+  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN];
+  int server_len = SERVER_ADDRESS_AND_PORT_MAX_LEN;
+  if (zoo_get(zh, PRIMARY_TREE_SERVER_ZNODE_PATH, 0, server, &server_len, NULL) < 0) {
+    return NULL;
+  }
+
+  char* copy = malloc(strlen(server) * sizeof(char));
+  if (copy == NULL) {
+    logger_error_malloc_failed("copy");
+    return NULL;
+  }
+  strncpy(copy, server, strlen(server));
+  return copy;
+}
+
+/* Returns the "<ip-address>:<port>" of the backup tree_server, or NULL if it isn't registered. */
+char* zk_get_backup_tree_server() {
+  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN];
+  int server_len = SERVER_ADDRESS_AND_PORT_MAX_LEN;
+  if (zoo_get(zh, BACKUP_TREE_SERVER_ZNODE_PATH, 0, server, &server_len, NULL) < 0) {
+    return NULL;
+  }
+
+  char* copy = malloc(strlen(server) * sizeof(char));
+  if (copy == NULL) {
+    logger_error_malloc_failed("copy");
+    return NULL;
+  }
+  strncpy(copy, server, strlen(server));
+  return copy;
 }
 
 void zk_close() {
