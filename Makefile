@@ -25,9 +25,11 @@ INCLUDEHEADERS_CFLAGS := -I./$(HEADERS_DIR) \
 INCLUDEPROTOBUF_CFLAGS := -I/usr/local/include \
                           -L/usr/local/lib \
                           -lprotobuf-c
+INCLUDEZOOKEEPER_CFLAGS := -DTHREADED
 
-COMPILE_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(if $(DEBUG), $(DEBUG_CFLAGS),)
-LINK_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(INCLUDEPROTOBUF_CFLAGS) -pthread $(if $(DEBUG), $(DEBUG_CFLAGS),)
+COMPILE_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(INCLUDEZOOKEEPER_CFLAGS) $(if $(DEBUG), $(DEBUG_CFLAGS),)
+LINK_CFLAGS := $(INCLUDEHEADERS_CFLAGS) $(INCLUDEPROTOBUF_CFLAGS) -pthread -lzookeeper_mt \
+ 			   $(if $(DEBUG), $(DEBUG_CFLAGS),)
 
 
 .PHONY: all
@@ -43,6 +45,7 @@ $(EXECS_DIR)/tree_server: $(OBJS_DIR)/logger-private.o \
 						  $(OBJS_DIR)/data.o $(OBJS_DIR)/entry.o $(OBJS_DIR)/tree.o \
                           $(OBJS_DIR)/sdmessage.pb-c.o $(OBJS_DIR)/message-private.o $(OBJS_DIR)/serialization.o \
                           $(OBJS_DIR)/$(SERVER_SUBDIR)/tasks-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_skel.o \
+                          $(OBJS_DIR)/zk-private.o \
                           $(OBJS_DIR)/inet-private.o $(OBJS_DIR)/$(SERVER_SUBDIR)/network_server.o \
 						  $(OBJS_DIR)/$(SERVER_SUBDIR)/tree_server.o
 $(EXECS): $:
