@@ -9,12 +9,26 @@
 #include "serialization-private.h"
 
 #include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #define SIZE_OF_INT sizeof(int)
+
+struct in_addr* get_host() {
+  char hostname[256];
+  gethostname(hostname, 256);
+
+  struct hostent* host = gethostbyname(hostname);
+  if (host->h_addrtype != AF_INET) {
+    logger_error("get_host", "Host has unexpected h_addrtype %d (expected: %d)", host->h_addrtype,
+                 AF_INET);
+    return NULL;
+  }
+  return (struct in_addr*) host->h_addr;
+}
 
 /* Reads buffer_size bytes from the socket with the given descriptor (by chunks if needed).
  *  Expected sockfd and buffer_size to be positive numbers.

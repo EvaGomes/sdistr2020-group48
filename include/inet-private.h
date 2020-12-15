@@ -6,6 +6,9 @@
 
 #include "message-private.h"
 
+/* Returns the Internet address of the host machine, or NULL if an error occurred. */
+struct in_addr* get_host();
+
 /* Reads bytes from the socket with the given descriptor and de-serializes them into a message_t.
  *  Returns the de-serialized message_t, or NULL if an error occurred.
  */

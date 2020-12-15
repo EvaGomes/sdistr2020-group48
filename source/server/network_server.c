@@ -33,10 +33,18 @@ int network_server_init(short port) {
     logger_perror("network_server_init", "Failed to allow reuse of local addresses");
   }
 
+
+  struct in_addr* ip_address = get_host();
+  if (ip_address == NULL) {
+    logger_perror("network_server_init", "Failed to get host");
+    close(listening_socket);
+    return -1;
+  }
+
   struct sockaddr_in server;
   server.sin_family = AF_INET;
   server.sin_port = port;
-  server.sin_addr.s_addr = htonl(INADDR_ANY);
+  server.sin_addr = *ip_address;
 
   if (bind(listening_socket, (struct sockaddr*) &server, sizeof(server)) < 0) {
     logger_perror("network_server_init", "Failed to bind the socket to the local address");
