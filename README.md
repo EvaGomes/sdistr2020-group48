@@ -11,6 +11,8 @@
 
 - Does not use standard error handling ("errno" and "perror").
 
+- (solved) ~~Makes use of read/write functions (to be replaced with custom read_all/write_all).~~
+
 - `tree_put` refuses NULL keys. By specification, function `tree_get_keys` returns NULL in the last
  entry to flag the end of the array; if we accepted NULL keys in the tree it would be impossible to
  distinguish if a NULL array-entry represented a NULL key or the array termination.
@@ -26,3 +28,6 @@
 - Assumes only one thread queues tasks (in case this changes, flag `last_task_id_assigned` must be
   considered a shared resource as well and be accessed only when a lock was acquired).
   
+- Memory leaks...
+  
+- Write-operations are not replicated to the backup server
