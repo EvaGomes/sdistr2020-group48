@@ -119,8 +119,8 @@ int tree_put(struct tree_t* tree, char* key, struct data_t* value) {
   return 0;
 }
 
-/* Returns the pointer to the node with the given key, or NULL if it is not in the tree with the given root.
- *  Expects the root to NOT be NULL.
+/* Returns the pointer to the node with the given key, or NULL if it is not in the tree with the
+ * given root. Expects the root to NOT be NULL.
  */
 struct tree_node_t** _tree_node_pointer_get(struct tree_node_t** pointer_to_root, char* key) {
   struct tree_node_t** pointer_to_current_node = pointer_to_root;
@@ -209,13 +209,14 @@ int tree_del(struct tree_t* tree, char* key) {
     logger_error_invalid_args("tree_del");
     return -1;
   }
-  struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
-  if (pointer_to_node == NULL) {
-    return -1;
+  if (tree->root != NULL) {
+    struct tree_node_t** pointer_to_node = _tree_node_pointer_get(&(tree->root), key);
+    if (pointer_to_node != NULL) {
+      _tree_node_del(pointer_to_node);
+      tree->size -= 1;
+      tree->height = _tree_compute_height(tree->root);
+    }
   }
-  _tree_node_del(pointer_to_node);
-  tree->size -= 1;
-  tree->height = _tree_compute_height(tree->root);
   return 0;
 }
 
