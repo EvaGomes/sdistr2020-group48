@@ -107,6 +107,7 @@ int zk_connect(const char* zookeeper_address_and_port) {
   }
   String_vector_destroy(children);
 
+  logger_info("\nConnected to zookeeper server at %s...\n", zookeeper_address_and_port);
   return 0;
 }
 

@@ -49,7 +49,7 @@ int network_connect(struct rtree_t* rtree) {
            server_connect(rtree->primary_server_ip_address, rtree->primary_server_port)) < 0) {
     return -1;
   }
-  logger_info("\nConnected to primary server at %s:%d...\n", rtree->primary_server_ip_address,
+  logger_info("Connected to primary server at %s:%d...\n", rtree->primary_server_ip_address,
               rtree->primary_server_port);
 
   if ((rtree->backup_sockfd =
@@ -58,7 +58,7 @@ int network_connect(struct rtree_t* rtree) {
     close(rtree->primary_sockfd);
     return -1;
   }
-  logger_info("\nConnected to backup server at %s:%d...\n", rtree->backup_server_ip_address,
+  logger_info("Connected to backup server at %s:%d...\n", rtree->backup_server_ip_address,
               rtree->backup_server_port);
 
   return 0;
