@@ -32,6 +32,17 @@ int servers_retry_connect(struct rtree_t* rtree) {
   char* primary_address_port = zk_get_primary_tree_server();
   char* backup_address_port = zk_get_backup_tree_server();
 
+  if (rtree->primary_server_ip_address != NULL) {
+    free(rtree->primary_server_ip_address);
+  }
+  rtree->primary_server_port = -1;
+  rtree->primary_sockfd = -1;
+  if (rtree->backup_server_ip_address != NULL) {
+    free(rtree->backup_server_ip_address);
+  }
+  rtree->backup_server_port = -1;
+  rtree->backup_sockfd = -1;
+
   if ((primary_address_port == NULL) || (backup_address_port == NULL) ||
       parse_address_port(primary_address_port, &(rtree->primary_server_ip_address),
                          &(rtree->primary_server_port)) < 0 ||
@@ -71,6 +82,12 @@ struct rtree_t* rtree_connect(const char* address_port) {
     logger_error_malloc_failed("rtree_connect");
     return NULL;
   }
+  rtree->primary_server_ip_address = NULL;
+  rtree->primary_server_port = -1;
+  rtree->primary_sockfd = -1;
+  rtree->backup_server_ip_address = NULL;
+  rtree->backup_server_port = -1;
+  rtree->backup_sockfd = -1;
 
   servers_retry_connect(rtree);
 

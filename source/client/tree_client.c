@@ -218,6 +218,6 @@ int main(int argc, char** argv) {
     free(input_str);
   }
 
-  printf("Quitting...");
+  printf("Quitting...\n");
   return rtree_disconnect(rtree);
 }

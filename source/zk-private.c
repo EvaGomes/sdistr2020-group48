@@ -48,7 +48,7 @@ static ZOOAPI int zk_create(const char* path, const char* value, int mode) {
 }
 
 static void String_vector_destroy(struct String_vector* vector) {
-  for(int i = 0; i < vector->count; ++i) {
+  for (int i = 0; i < vector->count; ++i) {
     free(vector->data[i]);
   }
   free(vector->data);
@@ -216,8 +216,8 @@ int zk_update_server_roles() {
                     BACKUP_TREE_SERVER_ZNODE_PATH);
       return -1;
     }
-    return 0;
   }
+  return 0;
 }
 
 void zk_close() {

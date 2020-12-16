@@ -71,7 +71,7 @@ int network_close(struct rtree_t* rtree) {
     logger_error_invalid_arg("network_close", "rtree", "NULL");
     return -1;
   }
-  int primary_res = close(rtree->primary_sockfd);
-  int backup_res = close(rtree->backup_sockfd);
+  int primary_res = rtree->primary_sockfd <= 0 ? 0 : close(rtree->primary_sockfd);
+  int backup_res = rtree->backup_sockfd <= 0 ? 0 : close(rtree->backup_sockfd);
   return (primary_res < 0 || backup_res < 0) ? -1 : 0;
 }
