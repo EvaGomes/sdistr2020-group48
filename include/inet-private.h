@@ -9,6 +9,12 @@
 /* Returns the Internet address of the host machine, or NULL if an error occurred. */
 struct in_addr* get_host();
 
+/* Creates a TCP socket and connects it to the server at the given IP address and port.
+ *  Returns the descriptor of the created socket if the connection was established successfully, or
+ * -1 if an error occurred.
+ */
+int server_connect(char* server_ip_address, int server_port);
+
 /* Reads bytes from the socket with the given descriptor and de-serializes them into a message_t.
  *  Returns the de-serialized message_t, or NULL if an error occurred.
  */

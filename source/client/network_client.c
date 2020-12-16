@@ -8,36 +8,7 @@
 #include "inet-private.h"
 #include "logger-private.h"
 
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <unistd.h>
-
-static int server_connect(char* server_ip_address, int server_port) {
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) {
-    logger_perror("server_connect", "Failed to create TCP socket");
-    return -1;
-  }
-
-  struct sockaddr_in server;
-  server.sin_family = AF_INET;
-  server.sin_port = htons(server_port);
-
-  if (inet_pton(AF_INET, server_ip_address, &server.sin_addr) < 1) {
-    logger_perror("server_connect", "Failed to convert server's IP \"%s\"", server_ip_address);
-    close(sockfd);
-    return -1;
-  }
-
-  if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
-    logger_perror("server_connect", "Failed to connect to server at %s:%d", server_ip_address,
-                  server_port);
-    close(sockfd);
-    return -1;
-  }
-
-  return sockfd;
-}
 
 int network_connect(struct rtree_t* rtree) {
   if (rtree == NULL) {

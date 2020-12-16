@@ -8,11 +8,13 @@
 #include "logger-private.h"
 #include "serialization-private.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #define SIZE_OF_INT sizeof(int)
@@ -30,10 +32,33 @@ struct in_addr* get_host() {
   return (struct in_addr*) host->h_addr;
 }
 
-/* Reads buffer_size bytes from the socket with the given descriptor (by chunks if needed).
- *  Expected sockfd and buffer_size to be positive numbers.
- *  Returns the read buffer, or NULL if the connection closed or an error occurred.
- */
+int server_connect(char* server_ip_address, int server_port) {
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd < 0) {
+    logger_perror("server_connect", "Failed to create TCP socket");
+    return -1;
+  }
+
+  struct sockaddr_in server;
+  server.sin_family = AF_INET;
+  server.sin_port = htons(server_port);
+
+  if (inet_pton(AF_INET, server_ip_address, &server.sin_addr) < 1) {
+    logger_perror("server_connect", "Failed to convert server's IP \"%s\"", server_ip_address);
+    close(sockfd);
+    return -1;
+  }
+
+  if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
+    logger_perror("server_connect", "Failed to connect to server at %s:%d", server_ip_address,
+                  server_port);
+    close(sockfd);
+    return -1;
+  }
+
+  return sockfd;
+}
+
 void* _network_read_buffer(int sockfd, int buffer_size) {
   void* buffer = malloc(buffer_size);
   if (buffer == NULL) {
