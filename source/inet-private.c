@@ -17,6 +17,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#define ADDRESS_PORT_SEPARATOR ":"
 #define SIZE_OF_INT sizeof(int)
 
 struct in_addr* get_host() {
@@ -30,6 +31,33 @@ struct in_addr* get_host() {
     return NULL;
   }
   return (struct in_addr*) host->h_addr;
+}
+
+int parse_address_port(char* address_port, char** pointer_to_address, int* pointer_to_port) {
+  if (address_port == NULL) {
+    logger_error_invalid_arg("parse_address_port", "address_port", "NULL");
+    return -1;
+  }
+
+  char address_and_port[strlen(address_port) + 1];
+  strcpy(address_and_port, address_port);
+
+  char* ip_address = strtok(address_and_port, ADDRESS_PORT_SEPARATOR);
+  char* port_str = strtok(NULL, ADDRESS_PORT_SEPARATOR);
+
+  if (port_str == NULL) {
+    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
+    return -1;
+  }
+  int port = atoi(port_str);
+  if (port == 0) {
+    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
+    return -1;
+  }
+
+  *pointer_to_address = strdup(ip_address);
+  *pointer_to_port = port;
+  return 0;
 }
 
 int server_connect(char* server_ip_address, int server_port) {

@@ -9,6 +9,14 @@
 /* Returns the Internet address of the host machine, or NULL if an error occurred. */
 struct in_addr* get_host();
 
+/* Parses the address_port string, sets pointer_to_address to the parsed IP address and sets
+ * pointer_to_port to the parsed and converted and port.
+ *  Expects address_port to have format "<ip-address>:<port>", where <ip-address> is a valid IP
+ *  address (X.X.X.X) and <port> is a positive number.
+ *  Returns 0 if the string was parsed correctly, or -1 if some error occurred.
+ */
+int parse_address_port(char* address_port, char** pointer_to_address, int* pointer_to_port);
+
 /* Creates a TCP socket and connects it to the server at the given IP address and port.
  *  Returns the descriptor of the created socket if the connection was established successfully, or
  * -1 if an error occurred.

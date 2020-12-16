@@ -7,6 +7,7 @@
 #include "client_stub-private.h"
 #include "data.h"
 #include "entry.h"
+#include "inet-private.h"
 #include "logger-private.h"
 #include "message-private.h"
 #include "network_client.h"
@@ -25,39 +26,6 @@ void _rtree_destroy(struct rtree_t* rtree) {
     free(rtree->backup_server_ip_address);
     free(rtree);
   }
-}
-
-/* Parses the address_port string, sets pointer_to_address to the parsed IP address and sets
- * pointer_to_port to the parsed address and port.
- *  Expects address_port to have format "<address>:<port>", where <port> is a positive number.
- *  Returns 0 if the string was parsed correctly, or -1 if some error occurred.
- */
-static int parse_address_port(char* address_port, char** pointer_to_address, int* pointer_to_port) {
-  if (address_port == NULL) {
-    logger_error_invalid_arg("parse_address_port", "address_port", "NULL");
-    return -1;
-  }
-
-  char address_and_port[strlen(address_port)];
-  strcpy(address_and_port, address_port);
-
-  char* delimiter = ":";
-  char* ip_address = strtok(address_and_port, delimiter);
-  char* port_str = strtok(NULL, delimiter);
-
-  if (port_str == NULL) {
-    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
-    return -1;
-  }
-  int port = atoi(port_str);
-  if (port == 0) {
-    logger_error_invalid_arg("parse_address_port", "address_port", address_port);
-    return -1;
-  }
-
-  *pointer_to_address = strdup(ip_address);
-  *pointer_to_port = port;
-  return 0;
 }
 
 int servers_retry_connect(struct rtree_t* rtree) {
