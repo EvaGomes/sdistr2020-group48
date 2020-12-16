@@ -14,12 +14,14 @@
 #include <zk-private.h>
 #include <zookeeper/zookeeper.h>
 
+/* The maximum length of an "<ip-address>:<port>" string. */
+#define SERVER_ADDRESS_AND_PORT_MAX_LEN 16 + 1 + 5 + 1
+
 static zhandle_t* zh;
 static int is_connected;
 static const char* ROOT_ZNODE_PATH = "/kvstore";
 static const char* PRIMARY_TREE_SERVER_ZNODE_PATH = "/kvstore/primary";
 static const char* BACKUP_TREE_SERVER_ZNODE_PATH = "/kvstore/backup";
-static const int SERVER_ADDRESS_AND_PORT_MAX_LEN = 16 + 1 + 5;
 
 enum ServerRole server_role = NONE;
 servers_listener_fn servers_listener = NULL;
@@ -41,8 +43,16 @@ static ZOOAPI int zk_exists(const char* path) {
 }
 
 static ZOOAPI int zk_create(const char* path, const char* value, int mode) {
-  int valuelen = (value == NULL) ? -1 : (int) strlen(value);
+  int valuelen = (value == NULL) ? -1 : ((int) strlen(value) + 1);
   return zoo_create(zh, path, value, valuelen, &ZOO_OPEN_ACL_UNSAFE, mode, NULL, 0);
+}
+
+static void String_vector_destroy(struct String_vector* vector) {
+  for(int i = 0; i < vector->count; ++i) {
+    free(vector->data[i]);
+  }
+  free(vector->data);
+  free(vector);
 }
 
 static void zk_children_watcher(zhandle_t* zzh, int type, int state, const char* path,
@@ -56,7 +66,7 @@ static void zk_children_watcher(zhandle_t* zzh, int type, int state, const char*
       servers_listener(servers_listener_context);
     }
   }
-  free(children);
+  String_vector_destroy(children);
 }
 
 int zk_connect(const char* zookeeper_address_and_port) {
@@ -95,7 +105,7 @@ int zk_connect(const char* zookeeper_address_and_port) {
   if (ZOK != zoo_wget_children(zh, ROOT_ZNODE_PATH, zk_children_watcher, "", children)) {
     logger_error("zk_children_watcher", "Failed to set children watcher");
   }
-  free(children);
+  String_vector_destroy(children);
 
   return 0;
 }
@@ -151,36 +161,22 @@ enum ServerRole zk_get_tree_server_role() {
 
 /* Returns the "<ip-address>:<port>" of the primary tree_server, or NULL if it isn't registered. */
 char* zk_get_primary_tree_server() {
-  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN];
+  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN] = "";
   int server_len = SERVER_ADDRESS_AND_PORT_MAX_LEN;
   if (zoo_get(zh, PRIMARY_TREE_SERVER_ZNODE_PATH, 0, server, &server_len, NULL) < 0) {
     return NULL;
   }
-
-  char* copy = malloc(strlen(server) * sizeof(char));
-  if (copy == NULL) {
-    logger_error_malloc_failed("copy");
-    return NULL;
-  }
-  strncpy(copy, server, strlen(server));
-  return copy;
+  return strdup(server);
 }
 
 /* Returns the "<ip-address>:<port>" of the backup tree_server, or NULL if it isn't registered. */
 char* zk_get_backup_tree_server() {
-  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN];
+  char server[SERVER_ADDRESS_AND_PORT_MAX_LEN] = "";
   int server_len = SERVER_ADDRESS_AND_PORT_MAX_LEN;
   if (zoo_get(zh, BACKUP_TREE_SERVER_ZNODE_PATH, 0, server, &server_len, NULL) < 0) {
     return NULL;
   }
-
-  char* copy = malloc(strlen(server) * sizeof(char));
-  if (copy == NULL) {
-    logger_error_malloc_failed("copy");
-    return NULL;
-  }
-  strncpy(copy, server, strlen(server));
-  return copy;
+  return strdup(server);
 }
 
 void zk_register_servers_listener(servers_listener_fn listener, void* context) {
