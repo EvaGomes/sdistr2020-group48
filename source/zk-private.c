@@ -21,6 +21,7 @@ static const char* PRIMARY_TREE_SERVER_ZNODE_PATH = "/kvstore/primary";
 static const char* BACKUP_TREE_SERVER_ZNODE_PATH = "/kvstore/backup";
 static const int SERVER_ADDRESS_AND_PORT_MAX_LEN = 16 + 1 + 5;
 
+enum ServerRole server_role = NONE;
 servers_listener_fn servers_listener = NULL;
 void* servers_listener_context = NULL;
 
@@ -99,7 +100,7 @@ int zk_connect(const char* zookeeper_address_and_port) {
   return 0;
 }
 
-enum ServerRole zk_register_tree_server(int server_listening_socket_fd) {
+int zk_register_tree_server(int server_listening_socket_fd) {
 
   // determine IP adress and port from socket descriptor
 
@@ -119,27 +120,33 @@ enum ServerRole zk_register_tree_server(int server_listening_socket_fd) {
   if (ZNONODE == zk_exists(PRIMARY_TREE_SERVER_ZNODE_PATH)) {
     if (ZOK == zk_create(PRIMARY_TREE_SERVER_ZNODE_PATH, server_address_and_port, ZOO_EPHEMERAL)) {
       logger_debug("Registered %s as the primary tree_server\n", server_address_and_port);
-      return PRIMARY;
+      server_role = PRIMARY;
+      return 0;
     } else {
       logger_perror("zk_register_tree_server", "Failed to create znode with path %s",
                     PRIMARY_TREE_SERVER_ZNODE_PATH);
-      return NONE;
+      return -1;
     }
   }
   if (ZNONODE == zk_exists(BACKUP_TREE_SERVER_ZNODE_PATH)) {
     if (ZOK == zk_create(BACKUP_TREE_SERVER_ZNODE_PATH, server_address_and_port, ZOO_EPHEMERAL)) {
       logger_debug("Registered %s as the backup tree_server\n", server_address_and_port);
-      return BACKUP;
+      server_role = BACKUP;
+      return 0;
     } else {
       logger_perror("zk_register_tree_server", "Failed to create znode with path %s",
                     BACKUP_TREE_SERVER_ZNODE_PATH);
-      return NONE;
+      return -1;
     }
   }
   logger_error("zk_register_tree_server",
                "Failed to register %s, primary and backup tree_servers are already set",
                server_address_and_port);
-  return NONE;
+  return -1;
+}
+
+enum ServerRole zk_get_tree_server_role() {
+  return server_role;
 }
 
 /* Returns the "<ip-address>:<port>" of the primary tree_server, or NULL if it isn't registered. */
@@ -181,7 +188,43 @@ void zk_register_servers_listener(servers_listener_fn listener, void* context) {
   servers_listener_context = context;
 }
 
+int zk_update_server_roles() {
+  if (ZNONODE == zk_exists(PRIMARY_TREE_SERVER_ZNODE_PATH) &&
+      ZOK == zk_exists(BACKUP_TREE_SERVER_ZNODE_PATH)) {
+
+    char new_primary_server[SERVER_ADDRESS_AND_PORT_MAX_LEN];
+    int new_primary_server_len = SERVER_ADDRESS_AND_PORT_MAX_LEN;
+    if (zoo_get(zh, BACKUP_TREE_SERVER_ZNODE_PATH, 0, new_primary_server, &new_primary_server_len,
+                NULL) < 0) {
+      logger_perror("zk_update_server_roles", "Failed to get data of znode with path %s",
+                    PRIMARY_TREE_SERVER_ZNODE_PATH);
+      return -1;
+    }
+
+    if (ZOK == zk_create(PRIMARY_TREE_SERVER_ZNODE_PATH, new_primary_server, ZOO_EPHEMERAL)) {
+      logger_debug("Registered %s as the primary tree_server\n", new_primary_server);
+    } else {
+      logger_perror("zk_update_server_roles", "Failed to create znode with path %s",
+                    PRIMARY_TREE_SERVER_ZNODE_PATH);
+      return -1;
+    }
+
+    if (server_role == BACKUP) {
+      logger_debug("This server has been promoted to primary server.\n");
+      server_role = PRIMARY;
+    }
+
+    if (zoo_delete(zh, BACKUP_TREE_SERVER_ZNODE_PATH, 0) < 0) {
+      logger_perror("zk_update_server_roles", "Failed to delete znode with path %s",
+                    BACKUP_TREE_SERVER_ZNODE_PATH);
+      return -1;
+    }
+    return 0;
+  }
+}
+
 void zk_close() {
+  server_role = NONE;
   servers_listener_context = NULL;
   servers_listener = NULL;
   zookeeper_close(zh);

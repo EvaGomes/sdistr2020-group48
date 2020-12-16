@@ -39,6 +39,12 @@ static int validate_args(int argc, char** argv) {
   return 0;
 }
 
+static void on_servers_change(void* listener_context) {
+  if (zk_get_tree_server_role() == BACKUP) {
+    zk_update_server_roles();
+  }
+}
+
 int main(int argc, char** argv) {
 
   signal(SIGINT, handle_SIGINT_signal);
@@ -66,6 +72,7 @@ int main(int argc, char** argv) {
     zk_close();
     return -1;
   }
+  zk_register_servers_listener(on_servers_change, NULL);
 
   network_main_loop(listening_socket);
 
